@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FreeBet – Prototyp v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#14336e; --navy-d:#0a1e47;
+  --hero:linear-gradient(140deg,#1b3f80 0%,#13316c 45%,#0a1e47 100%);
+  --bg:#eef1f6; --card:#fff; --line:#e8ebf1; --line-2:#f0f2f6;
+  --ink:#0f1729; --ink-2:#5b6577; --ink-3:#9aa3b4;
+  --win:#16a34a; --loss:#dc2626; --open:#d9870b; --gold:#d9a300; --tint:#eef3fb;
+  --r:18px; --shadow:0 1px 2px rgba(15,23,41,.04),0 6px 16px rgba(15,23,41,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#d4dae6;color:var(--ink);
+  -webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center}
+.app{width:100%;max-width:440px;height:100dvh;max-height:920px;background:var(--bg);position:relative;
+  overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(8,22,51,.35)}
+@media(min-width:480px){.app{border-radius:30px}}
+
+/* header */
+.hdr{flex-shrink:0;background:var(--hero);color:#fff;padding:13px 16px;display:flex;align-items:center;
+  justify-content:space-between;position:relative;z-index:20}
+.hdr-left{display:flex;align-items:center;gap:11px;min-width:0}
+.club-logo{width:40px;height:40px;border-radius:50%;background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.club-logo svg{width:23px;height:23px}
+.hdr-title{font-size:15.5px;font-weight:800;letter-spacing:-.2px;line-height:1.05}
+.hdr-sub2{font-size:11px;color:#aebbd8;font-weight:500;margin-top:2px}
+.lg-switch{display:flex;gap:8px}
+.lg-switch button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:11px 8px;font-family:inherit;font-size:13.5px;font-weight:700;color:var(--ink-2);cursor:pointer;box-shadow:var(--shadow)}
+.lg-switch button .em{font-size:16px}
+.lg-switch button.active{border-color:var(--navy);background:var(--tint);color:var(--navy)}
+/* league switcher pill */
+.lg-pill{display:inline-flex;align-items:center;gap:5px;margin-top:3px;background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:2px 8px 2px 7px;cursor:pointer}
+.lg-pill .em{font-size:12px}
+.lg-pill .nm{font-size:11px;font-weight:600;color:#dfe6f4}
+.lg-pill svg{width:11px;height:11px;color:#aebbd8}
+.hdr-bal{text-align:right;flex-shrink:0}
+.hdr-bal .l{font-size:10px;color:#aebbd8;font-weight:500}
+.hdr-bal .v{display:flex;align-items:center;gap:5px;justify-content:flex-end;font-size:16px;font-weight:800;margin-top:1px}
+.coin{font-size:13px}
+
+/* league sheet */
+.sheet-bg{position:absolute;inset:0;background:rgba(8,18,40,.45);z-index:50;opacity:0;pointer-events:none;transition:.2s}
+.sheet-bg.show{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:51;background:#fff;border-radius:22px 22px 0 0;
+  padding:8px 14px calc(20px + env(safe-area-inset-bottom));transform:translateY(110%);transition:transform .26s cubic-bezier(.3,1,.4,1)}
+.sheet.show{transform:translateY(0)}
+.sheet-grip{width:38px;height:4px;border-radius:99px;background:#dfe3ea;margin:8px auto 12px}
+.sheet h3{font-size:13px;font-weight:800;color:var(--ink-2);margin:0 4px 8px}
+.lg-opt{display:flex;align-items:center;gap:12px;padding:13px 12px;border-radius:14px;cursor:pointer}
+.lg-opt:hover{background:var(--tint)}
+.lg-opt.active{background:var(--tint)}
+.lg-opt .em{font-size:22px}
+.lg-opt .nm{flex:1;font-size:15px;font-weight:700}
+.lg-opt .bal{font-size:13px;color:var(--ink-3);font-weight:600}
+.lg-opt .ck{color:var(--navy);opacity:0}
+.lg-opt.active .ck{opacity:1}
+
+/* main */
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px 96px}
+.screen{display:none;animation:fade .22s ease}.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.stack>*+*{margin-top:14px}
+.sec-lbl{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3);margin:0 4px 9px;display:flex;align-items:center;justify-content:space-between}
+.sec-lbl button{background:none;border:none;font-family:inherit;font-size:11px;font-weight:700;color:var(--navy);cursor:pointer;letter-spacing:.2px}
+
+/* hero */
+.hero{background:var(--hero);color:#fff;border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0;background:radial-gradient(140% 90% at 90% -20%,rgba(255,255,255,.14),transparent 60%)}
+.hero-ey{font-size:11px;text-transform:uppercase;letter-spacing:1.3px;color:#aebbd8;font-weight:600;position:relative}
+.hero h1{font-size:25px;font-weight:900;letter-spacing:-.5px;margin-top:3px;position:relative}
+.hero p{font-size:13px;color:#c2cce0;margin-top:5px;line-height:1.5;position:relative}
+
+/* card */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;position:relative}
+.card-h{padding:14px 16px 12px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between}
+.card-h h2{font-size:15px;font-weight:800;letter-spacing:-.2px}
+.card-h p{font-size:12px;color:var(--ink-3);margin-top:2px}
+.card-h .act{font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;background:none;border:none;font-family:inherit}
+.rows>*{padding:13px 16px;border-bottom:1px solid var(--line-2)}.rows>*:last-child{border-bottom:none}
+
+/* ===== DASHBOARD (Start) ===== */
+.dash-hero{background:var(--hero);color:#fff;border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
+.dash-hero::after{content:"";position:absolute;inset:0;background:radial-gradient(140% 90% at 90% -20%,rgba(255,255,255,.14),transparent 60%)}
+.dash-hero .g{font-size:14px;color:#c2cce0;font-weight:600;position:relative}
+.dash-hero .big{font-size:30px;font-weight:900;margin-top:4px;position:relative}
+.dash-hero .sub{font-size:12px;color:#aebbd8;margin-top:4px;position:relative}
+.widget{position:relative}
+.dash-w{position:relative}
+.w-remove{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(15,23,41,.55);border:none;border-radius:18px;cursor:pointer;z-index:6}
+.editing .w-remove{display:flex}
+.w-remove span{background:var(--loss);color:#fff;font-weight:800;font-size:13px;padding:9px 16px;border-radius:99px;display:inline-flex;align-items:center;gap:7px;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.wp-row{display:flex;align-items:center;gap:12px;padding:13px 8px;border-bottom:1px solid var(--line-2)}
+.wp-row:last-child{border-bottom:none}
+.wp-em{font-size:22px;width:30px;text-align:center;flex-shrink:0}
+.wp-m{flex:1;min-width:0}
+.wp-m .n{font-size:14.5px;font-weight:700}
+.wp-m .d{font-size:12px;color:var(--ink-3);margin-top:1px}
+.wp-add{flex-shrink:0;background:var(--navy);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:12.5px;padding:8px 14px;cursor:pointer}
+/* balances per league */
+.bal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px}
+.bal-cell{background:#f7f9fc;border:1px solid var(--line-2);border-radius:14px;padding:12px}
+.bal-cell .lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);font-weight:600}
+.bal-cell .am{font-size:18px;font-weight:900;margin-top:6px}
+.bal-cell .gv{font-size:11.5px;font-weight:700;margin-top:2px}
+/* sparkline gv */
+.spark{padding:10px 16px 16px}
+.spark-row{display:flex;align-items:flex-end;gap:6px;height:74px;margin-top:4px}
+.spark-bar{flex:1;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#2b5bd7,#14336e);min-height:6px}
+.spark-bar.neg{background:linear-gradient(180deg,#f3a3a3,#dc2626)}
+.spark-x{display:flex;gap:6px;margin-top:6px}
+.spark-x span{flex:1;text-align:center;font-size:9px;color:var(--ink-3)}
+.kfig{display:flex;gap:0;padding:0}
+.kfig>div{flex:1;text-align:center;padding:14px 4px;border-right:1px solid var(--line-2)}
+.kfig>div:last-child{border-right:none}
+.kfig .v{font-size:18px;font-weight:900}.kfig .k{font-size:10.5px;color:var(--ink-3);margin-top:2px;font-weight:600}
+/* tracked players */
+.trk{display:flex;align-items:center;gap:12px}
+.trk-av{width:40px;height:40px;border-radius:50%;background:#f1f3f8;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:14px;flex-shrink:0}
+.trk-m{flex:1;min-width:0}.trk-m .n{font-size:14px;font-weight:700}.trk-m .h{font-size:11.5px;color:var(--ink-3)}
+.trk-tr{display:flex;align-items:flex-end;gap:2px;height:26px}
+.trk-tr i{width:4px;border-radius:2px;background:#cfd6e4}
+.trk-gv{font-size:13.5px;font-weight:800;text-align:right;min-width:58px}
+.add-row{display:flex;align-items:center;gap:10px;padding:14px 16px;color:var(--navy);font-weight:700;font-size:13.5px;cursor:pointer}
+.add-row .plus{width:30px;height:30px;border-radius:9px;background:var(--tint);display:flex;align-items:center;justify-content:center;font-size:18px}
+
+/* ===== Spieltag chips / matches (in group detail) ===== */
+.md-row{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;scrollbar-width:none}.md-row::-webkit-scrollbar{display:none}
+.md-chip{flex:0 0 auto;min-width:44px;height:44px;padding:0 6px;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--ink-2);font-weight:800;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;line-height:1.05}
+.md-chip small{font-size:8.5px;font-weight:600;color:var(--ink-3);text-transform:uppercase}
+.md-chip.active{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 4px 12px rgba(20,51,110,.3)}
+.md-chip.active small{color:#aebbd8}
+.md-chip.done{background:#f4f6fa;color:var(--ink-3)}
+.md-chip.done small{color:var(--ink-3)}
+.md-chip.future{border-style:dashed;color:var(--ink-3)}
+.res-score{font-size:18px;font-weight:900;color:var(--ink);min-width:54px;text-align:center}
+.md-pick{display:flex;align-items:center;gap:12px;width:100%;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:11px 14px;font-family:inherit;cursor:pointer;box-shadow:var(--shadow)}
+.md-pick .md-cal{font-size:18px}
+.md-pick .md-txt{flex:1;text-align:left;line-height:1.15}
+.md-pick .md-txt b{display:block;font-size:15px;font-weight:800;color:var(--ink)}
+.md-pick .md-txt small{font-size:11px;color:var(--ink-3)}
+.md-pick .md-ch{width:18px;height:18px;color:var(--ink-3);flex-shrink:0}
+.md-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-height:48vh;overflow-y:auto;padding:2px 2px 6px}
+.md-cell{aspect-ratio:1;border-radius:12px;border:1.5px solid var(--line);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:var(--ink-2);cursor:pointer;line-height:1}
+.md-cell small{font-size:7.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;margin-top:2px}
+.md-cell.done{background:#f4f6fa}
+.md-cell.future{border-style:dashed;color:var(--ink-3)}
+.md-cell.sel{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 4px 12px rgba(20,51,110,.3)}
+.md-cell.sel small{color:#aebbd8}
+.seg.seg4 button{font-size:12px;padding:8px 2px;letter-spacing:-.2px;white-space:nowrap}
+.match{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.match-top{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-size:11px;color:var(--ink-3);font-weight:500;border-bottom:1px solid var(--line-2)}
+.match-top .tag{background:var(--tint);color:var(--navy);font-weight:700;border-radius:6px;padding:2px 7px;font-size:10px}
+.match-main{display:flex;align-items:center;padding:12px 14px;gap:10px}
+.tm{display:flex;align-items:center;gap:9px;flex:1;min-width:0}.tm.away{flex-direction:row-reverse;text-align:right}
+.crest{width:34px;height:34px;border-radius:9px;background:#f1f3f8;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--navy);flex-shrink:0}
+.tm-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.match-vs{font-size:11px;color:var(--ink-3);font-weight:700}
+.odds{display:flex;gap:8px;padding:0 14px 14px}
+.odd{flex:1;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:8px 4px;cursor:pointer;text-align:center;transition:.13s}
+.odd:hover{border-color:#cfd6e4}.odd .k{font-size:11px;color:var(--ink-3);font-weight:700}.odd .q{font-size:15px;font-weight:800;margin-top:2px}
+.odd.sel{background:var(--navy);border-color:var(--navy);box-shadow:0 4px 12px rgba(20,51,110,.28)}.odd.sel .k,.odd.sel .q{color:#fff}
+.more-row{padding:0 14px 14px}
+.more-btn{width:100%;background:#f5f7fb;border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+.extra{display:none;padding:0 14px 14px}.extra.open{display:block}
+.extra-lbl{font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin:2px 0 8px}
+.locked{padding:14px;display:flex;gap:10px;align-items:center;font-size:12.5px;color:var(--ink-2);background:#f7f9fc}
+.locked .ic{width:30px;height:30px;border-radius:8px;background:#eef1f6;display:flex;align-items:center;justify-content:center}
+
+/* segmented */
+.seg{display:flex;background:#e7ebf2;border-radius:13px;padding:4px;gap:4px}
+.seg button{flex:1;border:none;background:none;font-family:inherit;font-size:13px;font-weight:700;color:var(--ink-2);padding:9px;border-radius:10px;cursor:pointer}
+.seg button.active{background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(15,23,41,.1)}
+.seg.seg4 button{font-size:11.5px;padding:9px 2px}
+.score-final{font-size:18px;font-weight:900;color:var(--ink);min-width:54px;text-align:center}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3);font-weight:700;text-align:center;padding:10px 4px}
+.tbl th.l,.tbl td.l{text-align:left}
+.tbl td{padding:11px 4px;font-size:13px;text-align:center;border-top:1px solid var(--line-2)}
+.tbl .club{display:flex;align-items:center;gap:9px;font-weight:600;text-align:left}
+.tbl .mini{width:24px;height:24px;border-radius:7px;background:#f1f3f8;border:1px solid var(--line);font-size:9px;font-weight:800;color:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rk{width:24px;height:24px;border-radius:50%;background:#eef1f6;color:var(--ink-2);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;margin:0 auto}
+.rk.g{background:#16a34a;color:#fff}.rk.g3{background:#d8f5e3;color:#0c7a37}
+.tbl tr.me td{background:var(--tint)}.tbl tr.me .club{color:var(--navy);font-weight:800}
+.pts{font-weight:800}
+
+/* groups */
+.code-row{display:flex;gap:9px;padding:0 16px 14px}
+.code-in{flex:1;height:46px;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;font-size:15px;font-family:inherit;letter-spacing:1.5px;color:var(--ink);background:#fbfcfe}
+.code-in::placeholder{color:var(--ink-3);letter-spacing:.5px}.code-in:focus{outline:none;border-color:var(--navy)}
+.btn{border:none;border-radius:12px;font-family:inherit;font-weight:700;cursor:pointer;transition:.15s}
+.btn-navy{background:var(--navy);color:#fff;padding:0 18px;height:46px;font-size:14px}.btn-navy:active{transform:scale(.98)}
+.btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--navy);width:calc(100% - 32px);margin:0 16px 14px;height:46px;font-size:14px}
+.grp{display:flex;align-items:center;gap:12px;cursor:pointer}
+.grp-ic{width:46px;height:46px;border-radius:14px;background:var(--tint);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+.grp-m{flex:1;min-width:0}.grp-m .n{font-size:14.5px;font-weight:700}.grp-m .s{font-size:12px;color:var(--ink-3);margin-top:1px}
+.grp-r{text-align:right;display:flex;align-items:center;gap:8px}.grp-r .p{font-size:17px;font-weight:900;color:var(--navy)}.grp-r .l{font-size:10px;color:var(--ink-3)}
+.grp-r .ch{color:var(--ink-3)}
+
+/* emoji picker */
+.emoji-pick{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px}
+.emoji-pick button{width:42px;height:42px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-size:20px;cursor:pointer}
+.emoji-pick button.active{border-color:var(--navy);background:var(--tint)}
+.field{padding:0 16px 12px}
+.field label{font-size:12px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:6px}
+.field input,.field select{width:100%;height:44px;border:1.5px solid var(--line);border-radius:12px;padding:0 12px;font-size:14px;font-family:inherit;color:var(--ink);background:#fbfcfe}
+.field input:focus,.field select:focus{outline:none;border-color:var(--navy)}
+
+/* group detail */
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;font-family:inherit;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer;margin-bottom:12px;padding:0}
+.back-btn svg{width:16px;height:16px}
+.gd-hero{background:var(--hero);color:#fff;border-radius:var(--r);padding:16px 18px;position:relative;overflow:hidden}
+.gd-hero::after{content:"";position:absolute;inset:0;background:radial-gradient(140% 90% at 90% -20%,rgba(255,255,255,.14),transparent 60%)}
+.gd-top{display:flex;align-items:center;gap:12px;position:relative}
+.gd-ic{width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:24px}
+.gd-top .n{font-size:18px;font-weight:900}.gd-top .s{font-size:12px;color:#aebbd8;margin-top:1px}
+.gd-stats{display:flex;gap:10px;margin-top:14px;position:relative}
+.gd-stat{flex:1;background:rgba(255,255,255,.1);border-radius:12px;padding:10px 12px}
+.gd-stat .l{font-size:10.5px;color:#aebbd8}.gd-stat .v{font-size:18px;font-weight:900;margin-top:2px}
+
+/* ranking */
+.lb-row{display:flex;align-items:center;gap:11px}
+.lb-rk{width:26px;font-weight:800;color:var(--ink-3);font-size:13px;text-align:center}
+.lb-rk.top{color:var(--gold)}
+.lb-av{width:34px;height:34px;border-radius:50%;background:#f1f3f8;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:12px;flex-shrink:0}
+.lb-m{flex:1;min-width:0}.lb-m .n{font-size:14px;font-weight:700}.lb-m .h{font-size:11.5px;color:var(--ink-3)}
+.lb-b{font-weight:800;font-size:14px;color:var(--win)}
+
+/* profile */
+.p-hero{background:var(--hero);color:#fff;border-radius:var(--r);padding:18px;display:flex;align-items:center;gap:14px}
+.p-av{width:60px;height:60px;border-radius:50%;background:#fff;color:var(--navy);font-size:24px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.p-hero .nm{font-size:20px;font-weight:900}.p-hero .hd{font-size:13px;color:#aebbd8}.p-hero .ms{font-size:11.5px;color:#8fa0c4;margin-top:4px}
+.set-row{display:flex;align-items:center;gap:13px;padding:14px 16px;border-bottom:1px solid var(--line-2);cursor:pointer}.set-row:last-child{border-bottom:none}
+.set-ic{width:20px;color:var(--navy)}.set-ic svg{width:20px;height:20px;display:block}
+.set-row .lb{flex:1;font-size:14px;font-weight:600}.set-row .vl{font-size:13px;color:var(--ink-3)}
+.set-row .ch{color:var(--ink-3)}.set-row .ch svg{width:16px;height:16px;display:block}
+.set-row.danger .lb,.set-row.danger .set-ic{color:var(--loss)}
+.toggle{width:44px;height:26px;border-radius:99px;background:var(--navy);position:relative;flex-shrink:0;cursor:pointer;transition:.18s}
+.toggle::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;right:3px;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.off{background:#d5dae4}.toggle.off::after{right:auto;left:3px}
+.appear{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 16px}
+.appear button{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:12px 4px;font-family:inherit;font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px}
+.appear button .e{font-size:18px}.appear button.active{border-color:var(--navy);background:var(--tint);color:var(--navy)}
+
+/* help */
+.acc{border-bottom:1px solid var(--line-2)}.acc:last-child{border-bottom:none}
+.acc-h{display:flex;align-items:center;gap:11px;padding:15px 16px;cursor:pointer}.acc-h .e{font-size:17px}.acc-h .t{flex:1;font-size:14px;font-weight:700}
+.acc-h .ch{color:var(--ink-3);transition:.2s}.acc.open .acc-h .ch{transform:rotate(180deg)}
+.acc-b{display:none;padding:0 16px 15px 43px;font-size:13px;color:var(--ink-2);line-height:1.6}.acc.open .acc-b{display:block}
+.link-row{display:flex;align-items:center;gap:12px;padding:15px 16px;cursor:pointer;border-bottom:1px solid var(--line-2)}.link-row:last-child{border-bottom:none}
+.link-row .e{font-size:18px}.link-row .t .n{font-size:14px;font-weight:700}.link-row .t .d{font-size:12px;color:var(--ink-3)}.link-row .t{flex:1}.link-row .ch{color:var(--ink-3)}
+.foot{text-align:center;font-size:11px;color:var(--ink-3);padding:8px 0 4px;line-height:1.7}
+
+/* group sub-tabs + filters */
+.pill-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.pill-tabs::-webkit-scrollbar{display:none}
+.pill-tabs button{flex:0 0 auto;padding:9px 15px;border-radius:99px;border:1.5px solid var(--line);background:#fff;font-family:inherit;font-size:13px;font-weight:700;color:var(--ink-2);cursor:pointer}
+.pill-tabs button.active{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 4px 12px rgba(20,51,110,.25)}
+.filter-row{display:flex;gap:8px;margin-bottom:12px}
+.filter-row button{flex:1;padding:8px 0;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer}
+.filter-row button.active{border-color:var(--navy);background:var(--tint);color:var(--navy)}
+.info-bar{display:flex;gap:9px;align-items:flex-start;background:#eef3fb;border:1px solid #d8e3f5;border-radius:12px;padding:11px 13px;font-size:12.5px;color:#2a4a83;margin-bottom:12px;line-height:1.45}
+.empty{text-align:center;color:var(--ink-3);font-size:13px;padding:26px 12px}
+/* slip card */
+.slip-card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.sc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line-2)}
+.sc-l{display:flex;align-items:center;gap:8px;min-width:0}
+.sc-av{width:24px;height:24px;border-radius:50%;background:#f1f3f8;color:var(--navy);font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sc-type{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;flex-shrink:0}
+.sc-picks{padding:4px 0}
+.sp-pick{display:flex;align-items:center;gap:9px;padding:8px 14px}
+.sp-ic{width:16px;text-align:center;font-weight:800;flex-shrink:0}
+.sp-info{flex:1;min-width:0}
+.sp-m{font-size:11px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-pk{font-size:13px;font-weight:600}
+.sp-q{font-size:13px;font-weight:800;color:var(--ink-2)}
+.sc-foot{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-top:1px solid var(--line-2);background:#fafbfd;font-size:12px;color:var(--ink-2)}
+.sc-foot b{color:var(--ink);font-weight:800}
+.sc-pay{font-size:14px;font-weight:900;flex-shrink:0}
+
+/* bet slip */
+.slip{position:absolute;left:0;right:0;bottom:66px;z-index:30;transform:translateY(120%);transition:transform .28s cubic-bezier(.4,1.2,.5,1);pointer-events:none}
+.slip.show{transform:translateY(0);pointer-events:auto}
+.slip-inner{margin:0 10px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 -4px 24px rgba(8,22,51,.18),var(--shadow);overflow:hidden}
+.slip-bar{background:var(--navy);color:#fff;display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer}
+.slip-bar .cnt{background:#fff;color:var(--navy);font-weight:800;font-size:13px;min-width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.slip-bar .lbl{flex:1;font-size:14px;font-weight:700}.slip-bar .lbl small{display:block;font-size:11px;color:#aebbd8;font-weight:500;margin-top:1px}
+.slip-bar .qt{font-size:16px;font-weight:900}.slip-bar .ch{transition:.2s}.slip.open .slip-bar .ch{transform:rotate(180deg)}
+.slip-body{display:none;max-height:44vh;overflow-y:auto}.slip.open .slip-body{display:block}
+.slip-pick{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line-2)}
+.slip-pick .info{flex:1;min-width:0}.slip-pick .mt{font-size:11px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.slip-pick .pk{font-size:13.5px;font-weight:700;margin-top:1px}
+.slip-pick .q{font-weight:800;font-size:14px}.slip-pick .rm{width:26px;height:26px;border-radius:8px;background:#f4f6fa;color:var(--ink-3);border:none;cursor:pointer;font-size:15px}
+.slip-foot{padding:14px 16px 16px;background:#fafbfd}
+.quick-stakes{display:flex;gap:8px;margin-bottom:12px}
+.quick-stakes button{flex:1;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 0;font-family:inherit;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer}
+.stake-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.stake-row label{font-size:13px;font-weight:600;color:var(--ink-2)}
+.stake-in{width:120px;height:42px;border:1.5px solid var(--line);border-radius:11px;padding:0 12px;font-size:15px;font-weight:700;font-family:inherit;text-align:right;color:var(--ink);background:#fff}.stake-in:focus{outline:none;border-color:var(--navy)}
+.win-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0 14px;border-top:1px dashed var(--line);margin-top:4px}
+.win-row .l{font-size:13px;color:var(--ink-2);font-weight:600}.win-row .v{font-size:20px;font-weight:900;color:var(--win)}
+.submit{width:100%;height:50px;background:var(--navy);color:#fff;border:none;border-radius:13px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}.submit:active{transform:scale(.99)}
+
+/* nav */
+.nav{flex-shrink:0;height:66px;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);position:relative;z-index:40}
+.nav button{flex:1;background:none;border:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-3);cursor:pointer;padding-top:8px}
+.nav button svg{width:22px;height:22px}.nav button span{font-size:9.5px;font-weight:600;letter-spacing:-.2px}.nav button.active{color:var(--navy)}
+
+/* toast */
+.toast{position:absolute;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:60;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:88%;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="hdr">
+    <div class="hdr-left">
+      <div class="club-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#14336e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+      </div>
+      <div>
+        <div class="hdr-title">FreeBet</div>
+        <div class="hdr-sub2">Tippspiel</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main id="main">
+
+    <!-- ===== START / DASHBOARD ===== -->
+    <section class="screen active" data-s="start">
+      <div class="stack">
+        <div class="dash-hero">
+          <div class="g">Hallo Lukas 👋</div>
+          <div class="big" id="dashGV">+0 Münzen</div>
+          <div class="sub">Gesamtbilanz über alle Ligen · Saison 25/26</div>
+        </div>
+
+        <div class="sec-lbl" style="margin-top:32px"><span>Mein Dashboard</span><button onclick="toggleEdit()" id="editBtn">Anpassen</button></div>
+
+        <div id="dashWidgets"></div>
+
+        <div class="add-row card" id="addWidgetBtn" style="justify-content:center;border-style:dashed" onclick="openWidgetPicker()">
+          <span class="plus">+</span> Widget hinzufügen
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== MATCHUP (Liga-Switch + Begegnungen | Tabelle getrennt) ===== -->
+    <section class="screen" data-s="tabelle">
+      <div class="stack">
+        <span class="sec-lbl"><span>Liga / Event</span></span>
+        <div class="lg-switch" id="lgSwitch"></div>
+
+        <div class="seg" id="muSeg">
+          <button class="active" onclick="muView('begegnungen',this)">Begegnungen</button>
+          <button onclick="muView('tabelle',this)">Tabelle</button>
+        </div>
+
+        <div id="muFix">
+          <h2 id="muTitle" style="font-size:18px;font-weight:900;margin:2px 4px 10px">Bundesliga</h2>
+          <button class="md-pick" onclick="openMdPicker('matchup')" style="margin-bottom:12px">
+            <span class="md-cal">📅</span>
+            <span class="md-txt"><b id="mMdNum">28. Spieltag</b><small>Spieltag wählen – Begegnungen &amp; Ergebnisse</small></span>
+            <svg class="md-ch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div><span class="sec-lbl"><span id="muMdLabel">Spieltag 28 · Begegnungen</span></span><div id="muMatchList"></div></div>
+        </div>
+
+        <div id="muTbl" style="display:none">
+          <div id="tblWrap">
+            <div id="tblView" class="card">
+              <table class="tbl"><thead><tr><th>#</th><th class="l">Verein</th><th>Sp</th><th>Tore</th><th>Pkt</th></tr></thead><tbody id="tblBody"></tbody></table>
+            </div>
+          </div>
+          <div id="tblNone" style="display:none">
+            <div class="card"><div class="locked"><span class="ic">🏆</span> Turniermodus – keine klassische Tabelle</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== GRUPPEN ===== -->
+    <section class="screen" data-s="gruppen">
+      <!-- list -->
+      <div id="grpList" class="stack">
+        <div class="hero">
+          <div class="hero-ey">Tippspiel</div>
+          <h1>Gruppen</h1>
+          <p>Hier wird getippt: Spieltage, Wettschein und Gruppen-Tabelle.</p>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>Gruppe beitreten</h2><p>Einladungscode deiner Freunde eingeben.</p></div>
+          <div class="code-row" style="padding-top:14px"><input class="code-in" placeholder="z. B. FB-7K2QX" maxlength="9"><button class="btn btn-navy">Beitreten</button></div>
+          <button class="btn btn-ghost" onclick="toggleCreate()">+ Neue Gruppe erstellen</button>
+          <!-- create form -->
+          <div id="createForm" style="display:none;border-top:1px solid var(--line-2);padding-top:12px">
+            <div class="field"><label>Gruppenname</label><input placeholder="z. B. Büro-Liga"></div>
+            <div class="field"><label>Liga</label><select><option>🇩🇪 Bundesliga</option><option>🌍 WM 2026</option></select></div>
+            <div class="field" style="padding-bottom:4px"><label>Icon für die Gruppe</label></div>
+            <div class="emoji-pick" id="emojiPick"></div>
+            <div class="field"><label>Startguthaben</label><input type="number" value="1000"></div>
+            <button class="btn btn-navy" style="width:calc(100% - 32px);margin:0 16px 14px" onclick="toast('Gruppe erstellt (Prototyp)')">Gruppe erstellen</button>
+          </div>
+        </div>
+        <div>
+          <span class="sec-lbl"><span>Meine Gruppen</span></span>
+          <div class="card"><div class="rows" id="grpRows"></div></div>
+        </div>
+      </div>
+      <!-- detail -->
+      <div id="grpDetail" style="display:none">
+        <button class="back-btn" onclick="closeGroup()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Alle Gruppen
+        </button>
+        <div class="gd-hero">
+          <div class="gd-top">
+            <div class="gd-ic" id="gdIc">⚽</div>
+            <div><div class="n" id="gdName">Büro-Liga</div><div class="s" id="gdSub">12 Mitglieder · Bundesliga</div></div>
+          </div>
+          <div class="gd-stats">
+            <div class="gd-stat"><div class="l">Mein Guthaben</div><div class="v" id="gdBal">1.000 Münzen</div></div>
+            <div class="gd-stat"><div class="l">Mein Platz</div><div class="v" id="gdRank">3.</div></div>
+          </div>
+        </div>
+        <button class="md-pick" onclick="openMdPicker('group')" style="margin-top:14px">
+          <span class="md-cal">📅</span>
+          <span class="md-txt"><b id="gMdNum">28. Spieltag</b><small>Spieltag wählen – Begegnungen, Ergebnisse &amp; Scheine</small></span>
+          <svg class="md-ch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="seg seg4" id="gdSeg" style="margin-top:14px">
+          <button class="active" onclick="gdTab('spiele',this)">Spiele</button>
+          <button onclick="gdTab('scheine',this)">Scheine</button>
+          <button onclick="gdTab('konk',this)">Gegner</button>
+          <button onclick="gdTab('tabelle',this)">Tabelle</button>
+        </div>
+        <div id="gdSpiele" style="margin-top:14px">
+          <span class="sec-lbl"><span id="gdMdLabel">Spieltag 28 · Tipps offen</span></span><div id="matchList"></div>
+        </div>
+        <div id="gdScheine" style="display:none;margin-top:14px">
+          <span class="sec-lbl"><span>Meine Scheine</span></span>
+          <div class="filter-row" id="scheineFilter">
+            <button class="active" onclick="setScheineFilter('alle',this)">Alle</button>
+            <button onclick="setScheineFilter('offen',this)">Offen</button>
+            <button onclick="setScheineFilter('entschieden',this)">Entschieden</button>
+          </div>
+          <div id="meScheineList"></div>
+        </div>
+        <div id="gdKonk" style="display:none;margin-top:14px">
+          <span class="sec-lbl"><span>Scheine der Konkurrenz</span></span>
+          <div class="info-bar"><span>👁️</span><span>Tipps der anderen werden – je nach Gruppen-Einstellung – erst ab Anpfiff des jeweiligen Spiels sichtbar.</span></div>
+          <div id="konkList"></div>
+        </div>
+        <div id="gdTabelle" style="display:none;margin-top:14px">
+          <div class="card"><div class="card-h"><h2>Gruppen-Tabelle</h2><p>nach Guthaben</p></div><div class="rows" id="gdTblRows"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== RANKING ===== -->
+    <section class="screen" data-s="ranking">
+      <div class="stack">
+        <div class="hero">
+          <div class="hero-ey">Über alle Gruppen</div>
+          <h1>Globales Ranking</h1>
+          <p>Wer macht das meiste aus seinem Startguthaben?</p>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>🏆 Höchster Gesamtgewinn</h2><p>kumuliert über alle Gruppen</p></div>
+          <div class="rows" id="rankTotal"></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>💰 Größte Einzelgewinne</h2><p>beste einzelne Scheine</p></div>
+          <div class="rows" id="rankSingle"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PROFIL ===== -->
+    <section class="screen" data-s="profil">
+      <div class="stack">
+        <div class="p-hero">
+          <div class="p-av">LM</div>
+          <div><div class="nm">Lukas Meyer</div><div class="hd">@lukasm · lukas.meyer@mail.de</div><div class="ms">Mitglied seit Juni 2026</div></div>
+        </div>
+        <div class="card"><div class="card-h"><h2>Erscheinungsbild</h2></div>
+          <div class="appear"><button class="active"><span class="e">☀️</span>Hell</button><button><span class="e">🌙</span>Dunkel</button><button><span class="e">⚙️</span>System</button></div>
+        </div>
+        <div class="card">
+          <div class="set-row"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span><span class="lb">Benachrichtigungen</span><span class="toggle" onclick="this.classList.toggle('off')"></span></div>
+          <div class="set-row" onclick="toast('Profil bearbeiten')"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="lb">Profil bearbeiten</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+          <div class="set-row" onclick="toast('Sprache: Deutsch')"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg></span><span class="lb">Sprache</span><span class="vl">Deutsch</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+        </div>
+        <div class="card"><div class="card-h"><h2>Hilfe &amp; Support</h2></div><div id="faq"></div></div>
+        <div class="card">
+          <div class="link-row" onclick="toast('Anleitung öffnen')"><span class="e">📘</span><div class="t"><div class="n">Komplette Anleitung</div><div class="d">Spielregeln Schritt für Schritt</div></div><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+          <div class="link-row" onclick="toast('Produktwebseite öffnen')"><span class="e">🌐</span><div class="t"><div class="n">Produktwebseite</div><div class="d">freebet-pro.de</div></div><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span></div>
+          <div class="link-row" onclick="toast('Support kontaktieren')"><span class="e">✉️</span><div class="t"><div class="n">Support kontaktieren</div><div class="d">info@freebet-pro.de</div></div><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+        </div>
+        <div class="card">
+          <div class="set-row" onclick="toast('Abgemeldet')"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span><span class="lb">Abmelden</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+          <div class="set-row danger" onclick="toast('Konto löschen – Bestätigung nötig')"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></span><span class="lb">Konto löschen</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+        </div>
+        <div class="foot">FreeBet · nur Spielgeld, keine echten Einsätze<br>Impressum · Datenschutz · AGB</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BET SLIP -->
+  <div class="slip" id="slip">
+    <div class="slip-inner">
+      <div class="slip-bar" onclick="toggleSlip()">
+        <span class="cnt" id="slipCnt">0</span>
+        <span class="lbl" id="slipLbl">Wettschein<small id="slipType">Einzelwette</small></span>
+        <span class="qt" id="slipQt">–</span>
+        <span class="ch"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></span>
+      </div>
+      <div class="slip-body">
+        <div id="slipPicks"></div>
+        <div class="slip-foot">
+          <div class="quick-stakes"><button onclick="setStake(50)">50</button><button onclick="setStake(100)">100</button><button onclick="setStake(250)">250</button><button onclick="setStake(500)">500</button></div>
+          <div class="stake-row"><label>Einsatz</label><input class="stake-in" id="stakeIn" type="number" min="0" value="100" oninput="renderSlip()"></div>
+          <div class="win-row"><span class="l">Möglicher Gewinn</span><span class="v" id="slipWin">– Münzen</span></div>
+          <button class="submit" onclick="submitSlip()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Wette abschließen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- MATCHDAY PICKER SHEET -->
+  <div class="sheet-bg" id="mdBg" onclick="closeMdPicker()"></div>
+  <div class="sheet" id="mdSheet">
+    <div class="sheet-grip"></div>
+    <h3>Spieltag wählen</h3>
+    <div class="md-grid" id="mdGrid"></div>
+  </div>
+
+  <!-- WIDGET PICKER SHEET -->
+  <div class="sheet-bg" id="wpBg" onclick="closeWidgetPicker()"></div>
+  <div class="sheet" id="wpSheet">
+    <div class="sheet-grip"></div>
+    <h3>Widget hinzufügen</h3>
+    <div id="wpList"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="nav" id="nav">
+    <button class="active" data-t="start" onclick="go('start',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Start</span></button>
+    <button data-t="tabelle" onclick="go('tabelle',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h6v14H4z"/><path d="M14 5h6v14h-6z"/><line x1="12" y1="3" x2="12" y2="21"/></svg><span>Matchup</span></button>
+    <button data-t="gruppen" onclick="go('gruppen',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Gruppen</span></button>
+    <button data-t="ranking" onclick="go('ranking',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Ranking</span></button>
+    <button data-t="profil" onclick="go('profil',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg><span>Profil</span></button>
+  </nav>
+</div>
+
+<script>
+/* ====== DATA ====== */
+const LEAGUES=[
+  {id:'bl1',em:'🇩🇪',name:'Bundesliga'},
+  {id:'wm2026',em:'🌍',name:'WM 2026'},
+  /* {id:'multi',em:'🌐',name:'Alle Events'},  // vorerst auskommentiert */
+];
+const BAL={bl1:1000, wm2026:1000};
+let activeLeague='bl1';
+
+const MATCHES=[
+  {id:'m1',t:'Fr · 20:30',h:'Bayern',ha:'FCB',a:'Dortmund',aa:'BVB',o:{'1':1.65,'X':4.10,'2':4.80},ou:{'Über 2.5':1.55,'Unter 2.5':2.45},closed:true},
+  {id:'m2',t:'Sa · 15:30',h:'Leipzig',ha:'RBL',a:'Leverkusen',aa:'B04',o:{'1':2.40,'X':3.50,'2':2.70},ou:{'Über 2.5':1.70,'Unter 2.5':2.10}},
+  {id:'m3',t:'Sa · 15:30',h:'Freiburg',ha:'SCF',a:'Wolfsburg',aa:'WOB',o:{'1':2.05,'X':3.40,'2':3.50},ou:{'Über 2.5':1.95,'Unter 2.5':1.80}},
+  {id:'m4',t:'Sa · 18:30',h:'Frankfurt',ha:'SGE',a:'Stuttgart',aa:'VfB',o:{'1':2.10,'X':3.60,'2':3.20},ou:{'Über 2.5':1.60,'Unter 2.5':2.30}},
+  {id:'m5',t:'So · 17:30',h:'Mainz',ha:'M05',a:'Gladbach',aa:'BMG',o:{'1':2.55,'X':3.45,'2':2.55},ou:{'Über 2.5':1.80,'Unter 2.5':1.95}},
+];
+const CURRENT_MD=28;            // aktueller Spieltag
+let gSelMD=CURRENT_MD, mSelMD=CURRENT_MD;
+const RESULTS=[                 // Endstände vergangener Spieltage
+  {ha:'FCB',h:'Bayern',aa:'BVB',a:'Dortmund',hs:3,as:1},
+  {ha:'RBL',h:'Leipzig',aa:'B04',a:'Leverkusen',hs:1,as:1},
+  {ha:'SGE',h:'Frankfurt',aa:'VfB',a:'Stuttgart',hs:0,as:2},
+  {ha:'SCF',h:'Freiburg',aa:'WOB',a:'Wolfsburg',hs:2,as:0},
+  {ha:'M05',h:'Mainz',aa:'BMG',a:'Gladbach',hs:1,as:1},
+];
+const TABLE=[['1','FCB','Bayern',27,'71:22',68],['2','B04','Leverkusen',27,'58:28',60],['3','RBL','Leipzig',27,'52:30',55],['4','SGE','Frankfurt',27,'49:33',51],['5','BVB','Dortmund',27,'50:36',48],['6','VfB','Stuttgart',27,'47:38',45],['7','SCF','Freiburg',27,'40:39',42],['8','WOB','Wolfsburg',27,'38:40',38],['9','M05','Mainz',27,'35:41',35],['10','BMG','Gladbach',27,'36:43',33]];
+const MY_TEAM='Dortmund';
+const GROUPS=[
+  {code:'bo1',ic:'⚽',n:'Büro-Liga 25/26',mem:12,lg:'Bundesliga',bal:1240,p:'3.'},
+  {code:'st1',ic:'🍻',n:'Stammtisch FC',mem:7,lg:'Bundesliga',bal:1880,p:'1.'},
+  {code:'cl1',ic:'🏆',n:'CL Tipprunde',mem:24,lg:'Champions League',bal:760,p:'9.'},
+];
+const GRP_MEMBERS=[['Sven',1880],['Aylin',1510],['Lukas',1240],['Mara',1180],['Tom',1020],['Nina',940],['Ben',880]];
+const SLIPS_ME=[
+  {md:28,type:'3er Kombi',status:'open',stake:100,picks:[
+    {m:'Bayern – Dortmund',pick:'Heimsieg',q:1.65,res:'open'},
+    {m:'Leipzig – Leverkusen',pick:'Über 2,5 Tore',q:1.70,res:'open'},
+    {m:'Frankfurt – Stuttgart',pick:'Heimsieg',q:2.10,res:'open'}]},
+  {md:27,type:'Einzelwette',status:'win',stake:200,picks:[
+    {m:'Freiburg – Wolfsburg',pick:'Über 2,5 Tore',q:1.95,res:'win'}]},
+  {md:26,type:'2er Kombi',status:'loss',stake:50,picks:[
+    {m:'Mainz – Gladbach',pick:'Auswärtssieg',q:2.55,res:'loss'},
+    {m:'Bayern – Dortmund',pick:'Unter 2,5 Tore',q:2.45,res:'win'}]},
+];
+const SLIPS_OPP=[
+  {md:28,member:'Sven',type:'Einzelwette',status:'open',stake:150,picks:[
+    {m:'Bayern – Dortmund',pick:'Heimsieg',q:1.65,res:'open'}]},
+  {md:27,member:'Mara',type:'3er Kombi',status:'win',stake:120,picks:[
+    {m:'Leipzig – Leverkusen',pick:'Heimsieg',q:2.40,res:'win'},
+    {m:'Frankfurt – Stuttgart',pick:'Über 2,5 Tore',q:1.60,res:'win'},
+    {m:'Freiburg – Wolfsburg',pick:'Heimsieg',q:2.05,res:'win'}]},
+  {md:26,member:'Aylin',type:'Einzelwette',status:'loss',stake:80,picks:[
+    {m:'Mainz – Gladbach',pick:'Heimsieg',q:2.55,res:'loss'}]},
+];
+let scheineFilter='alle';
+const RANK_TOTAL=[['Mara','@marak',3,'+940'],['Jonas','@jonasp',2,'+720'],['Lukas','@lukasm',3,'+480'],['Sven','@svenb',1,'+310'],['Aylin','@aylin',2,'+180'],['Tom','@tomh',1,'+20']];
+const RANK_SINGLE=[['Mara','Stammtisch FC','12,40','+1.140'],['Sven','Büro-Liga 25/26','7,90','+690'],['Jonas','CL Tipprunde','5,60','+460'],['Lukas','Büro-Liga 25/26','4,20','+320'],['Aylin','Stammtisch FC','3,10','+210']];
+const TRACK=[['Sven','@svenb','+310',[8,12,6,14,18,22,16,24]],['Mara','@marak','+940',[14,18,20,16,24,22,28,30]]];
+const SPARK=[120,-60,80,40,-30,90];
+const FAQ=[
+  ['🔔','Benachrichtigungen','Aktiviere unter Profil die Benachrichtigungen, um Reminder vor Anpfiff, Ergebnisse und den Spieltags-Recap nicht zu verpassen.'],
+  ['⏰','Wetten platzieren & stornieren','Tipps sind bis zum Anpfiff des jeweiligen Spiels möglich. Solange ein Schein nicht abgeschlossen ist, kannst du Tipps frei hinzufügen oder entfernen.'],
+  ['🔗','Kombiwetten','Mehrere Tipps lassen sich zu einer Kombi verknüpfen. Die Quoten werden multipliziert – alle Tipps müssen stimmen.'],
+  ['📈','Quoten','Quoten werden automatisch aus den Spieldaten berechnet und können sich bis zum Anpfiff ändern.'],
+  ['📋','Wettmärkte','Pro Spiel: Ergebnis (1 / X / 2) sowie Über/Unter 2,5 Tore. Pro Spiel zählt nur ein Tipp.'],
+];
+const EMOJIS=['⚽','🏆','🍻','🔥','🎯','🦁','🐻','⭐','🍺','🏟️'];
+
+let slip=[], slipOpen=false, editMode=false;
+const fmt=n=>n.toLocaleString('de-DE',{maximumFractionDigits:0});
+
+/* ====== LEAGUE SWITCHER (im Matchup-Tab) ====== */
+function renderLeaguePills(){
+  document.getElementById('lgSwitch').innerHTML=LEAGUES.map(l=>`<button class="${l.id===activeLeague?'active':''}" onclick="selectLeague('${l.id}')"><span class="em">${l.em}</span>${l.name}</button>`).join('');
+}
+function selectLeague(id){
+  activeLeague=id; const l=LEAGUES.find(x=>x.id===id);
+  document.getElementById('muTitle').textContent=l.name;
+  const hasTable=(id==='bl1');                      // WM = Turniermodus, keine Tabelle
+  document.getElementById('tblWrap').style.display=hasTable?'':'none';
+  document.getElementById('tblNone').style.display=hasTable?'none':'';
+  renderLeaguePills();
+}
+
+/* ====== DASHBOARD ====== */
+const WIDGET_LIB={
+  balance:{emoji:'💰',name:'Guthaben pro Liga',desc:'Dein Spielgeld je Liga'},
+  gv:{emoji:'📈',name:'Gewinn / Verlust',desc:'Verlauf der letzten Spieltage'},
+  tracker:{emoji:'👁️',name:'Spieler im Blick',desc:'Mitspieler & ihre Form'},
+  hitrate:{emoji:'🎯',name:'Trefferquote',desc:'Gewonnene vs. verlorene Scheine'},
+  open:{emoji:'🧾',name:'Offene Scheine',desc:'Einsatz im Spiel & möglicher Gewinn'},
+  form:{emoji:'🔥',name:'Meine Form',desc:'Deine letzten 5 Scheine'},
+  awards:{emoji:'🏆',name:'Pokalschrank',desc:'Deine Auszeichnungen'},
+  versus:{emoji:'⚔️',name:'Direktvergleich',desc:'Du gegen einen Mitspieler'},
+  next:{emoji:'⏱️',name:'Nächster Anpfiff',desc:'Worauf du noch tippen kannst'},
+};
+let activeWidgets=['balance','gv','tracker'];
+function widgetInner(id){
+  if(id==='balance'){
+    return `<div class="card-h"><h2>Guthaben pro Liga</h2></div><div class="bal-grid">${LEAGUES.map(l=>{const gv=(BAL[l.id]||0)-1000;const col=gv>0?'var(--win)':gv<0?'var(--loss)':'var(--ink-3)';return `<div class="bal-cell"><div class="lg"><span>${l.em}</span>${l.name}</div><div class="am">${fmt(BAL[l.id]||0)} Münzen</div><div class="gv" style="color:${col}">${gv>0?'+':''}${fmt(gv)} Münzen</div></div>`;}).join('')}</div>`;
+  }
+  if(id==='gv'){
+    const max=Math.max(...SPARK.map(Math.abs));
+    return `<div class="card-h"><h2>Gewinn / Verlust</h2><p>Letzte 6 Spieltage</p></div><div class="spark"><div class="spark-row">${SPARK.map(v=>`<div class="spark-bar ${v<0?'neg':''}" style="height:${Math.max(6,Math.abs(v)/max*74)}px"></div>`).join('')}</div><div class="spark-x">${SPARK.map((_,i)=>`<span>ST${23+i}</span>`).join('')}</div></div><div class="kfig"><div><div class="v">0</div><div class="k">Gesamt</div></div><div><div class="v" style="color:var(--win)">0</div><div class="k">Gewonnen</div></div><div><div class="v" style="color:var(--loss)">0</div><div class="k">Verloren</div></div><div><div class="v" style="color:var(--open)">0</div><div class="k">Offen</div></div></div>`;
+  }
+  if(id==='tracker'){
+    return `<div class="card-h"><h2>Spieler im Blick</h2><button class="act" onclick="toast('Spieler hinzufügen')">+ Spieler</button></div><div class="rows">${TRACK.map(p=>{const max=Math.max(...p[3]);const tr=p[3].map(v=>`<i style="height:${Math.max(4,v/max*26)}px"></i>`).join('');return `<div class="trk"><div class="trk-av">${p[0][0]}</div><div class="trk-m"><div class="n">${p[0]}</div><div class="h">${p[1]}</div></div><div class="trk-tr">${tr}</div><div class="trk-gv" style="color:var(--win)">${p[2]} Münzen</div></div>`;}).join('')}</div><div class="add-row" onclick="toast('Spieler hinzufügen')"><span class="plus">+</span> Mitspieler tracken</div>`;
+  }
+  if(id==='hitrate'){
+    return `<div class="card-h"><h2>Trefferquote</h2><p>diese Saison</p></div><div style="padding:16px"><div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:30px;font-weight:900">63%</span><span style="font-size:12px;color:var(--ink-3)">12 gewonnen · 7 verloren</span></div><div style="height:8px;border-radius:99px;background:#eef0f4;margin-top:10px;overflow:hidden"><div style="width:63%;height:100%;background:var(--win)"></div></div></div>`;
+  }
+  if(id==='open'){
+    return `<div class="card-h"><h2>Offene Scheine</h2></div><div class="kfig"><div><div class="v">2</div><div class="k">Offen</div></div><div><div class="v">250</div><div class="k">Einsatz</div></div><div><div class="v" style="color:var(--win)">+820</div><div class="k">möglich</div></div></div>`;
+  }
+  if(id==='form'){
+    const f=['win','win','loss','win','open'],map={win:['G','var(--win)'],loss:['V','var(--loss)'],open:['•','var(--ink-3)']};
+    return `<div class="card-h"><h2>Meine Form</h2><p>letzte 5 Scheine</p></div><div style="display:flex;gap:8px;padding:16px">${f.map(x=>`<div style="flex:1;aspect-ratio:1;border-radius:10px;background:${map[x][1]};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800">${map[x][0]}</div>`).join('')}</div>`;
+  }
+  if(id==='awards'){
+    return `<div class="card-h"><h2>Pokalschrank</h2><p>3 von 12 Auszeichnungen</p></div><div style="display:flex;gap:10px;padding:16px;flex-wrap:wrap">${['🥇','🔥','🎯','🔒','🔒','🔒'].map(e=>`<div style="width:46px;height:46px;border-radius:12px;background:${e==='🔒'?'#f4f6fa':'var(--tint)'};display:flex;align-items:center;justify-content:center;font-size:20px">${e}</div>`).join('')}</div>`;
+  }
+  if(id==='versus'){
+    return `<div class="card-h"><h2>Direktvergleich</h2><p>Du vs. Mara</p></div><div style="display:flex;padding:16px;gap:10px;text-align:center"><div style="flex:1"><div class="lb-av" style="margin:0 auto 6px">L</div><div style="font-weight:700;font-size:13px">Du</div><div style="font-weight:900;color:var(--navy)">1.240 Münzen</div></div><div style="align-self:center;color:var(--ink-3);font-weight:800">vs</div><div style="flex:1"><div class="lb-av" style="margin:0 auto 6px">M</div><div style="font-weight:700;font-size:13px">Mara</div><div style="font-weight:900;color:var(--navy)">1.180 Münzen</div></div></div>`;
+  }
+  if(id==='next'){
+    return `<div class="card-h"><h2>Nächster Anpfiff</h2></div><div style="padding:14px 16px;display:flex;align-items:center;gap:12px"><div class="crest">RBL</div><div style="flex:1"><div style="font-weight:700;font-size:13px">Leipzig – Leverkusen</div><div style="font-size:12px;color:var(--ink-3)">Sa · 15:30</div></div><div style="text-align:right"><div style="font-weight:900;color:var(--navy)">02:14:50</div><div style="font-size:10px;color:var(--ink-3)">bis Anpfiff</div></div></div>`;
+  }
+  return '';
+}
+function dashWidgetHTML(id){
+  return `<div class="widget dash-w card" data-w="${id}" style="margin-bottom:14px">
+    <button class="w-remove" onclick="removeWidget('${id}')"><span>✕ Entfernen</span></button>
+    ${widgetInner(id)}
+  </div>`;
+}
+function renderDash(){
+  document.getElementById('dashGV').textContent='+0 Münzen';
+  document.getElementById('dashWidgets').innerHTML=activeWidgets.map(dashWidgetHTML).join('');
+}
+function removeWidget(id){ activeWidgets=activeWidgets.filter(w=>w!==id); renderDash(); }
+function addWidget(id){ if(!activeWidgets.includes(id)) activeWidgets.push(id); renderDash(); closeWidgetPicker(); }
+function openWidgetPicker(){
+  const avail=Object.keys(WIDGET_LIB).filter(id=>!activeWidgets.includes(id));
+  document.getElementById('wpList').innerHTML = avail.length
+    ? avail.map(id=>{const w=WIDGET_LIB[id];return `<div class="wp-row"><span class="wp-em">${w.emoji}</span><div class="wp-m"><div class="n">${w.name}</div><div class="d">${w.desc}</div></div><button class="wp-add" onclick="addWidget('${id}')">Hinzufügen</button></div>`;}).join('')
+    : '<div class="empty">Alle Widgets sind bereits auf deinem Dashboard.</div>';
+  document.getElementById('wpBg').classList.add('show'); document.getElementById('wpSheet').classList.add('show');
+}
+function closeWidgetPicker(){ document.getElementById('wpBg').classList.remove('show'); document.getElementById('wpSheet').classList.remove('show'); }
+function toggleEdit(){
+  editMode=!editMode;
+  document.getElementById('editBtn').textContent=editMode?'Fertig':'Anpassen';
+  document.getElementById('dashWidgets').classList.toggle('editing',editMode);
+}
+
+/* ====== TABELLE ====== */
+function renderTable(){
+  document.getElementById('tblBody').innerHTML=TABLE.map(r=>{
+    const me=r[2]===MY_TEAM; let rk=`<div class="rk">${r[0]}</div>`;
+    if(r[0]==='1') rk=`<div class="rk g">1</div>`; else if(r[0]==='2'||r[0]==='3') rk=`<div class="rk g3">${r[0]}</div>`;
+    return `<tr class="${me?'me':''}"><td>${rk}</td><td class="l"><div class="club"><div class="mini">${r[1]}</div>${r[2]}</div></td><td>${r[3]}</td><td>${r[4]}</td><td class="pts">${r[5]}</td></tr>`;
+  }).join('');
+}
+function muView(w,btn){
+  document.querySelectorAll('#muSeg button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.getElementById('muFix').style.display=w==='begegnungen'?'':'none';
+  document.getElementById('muTbl').style.display=w==='tabelle'?'':'none';
+}
+
+/* ====== GROUPS ====== */
+function renderGroups(){
+  document.getElementById('grpRows').innerHTML=GROUPS.map(g=>`
+    <div class="grp" onclick="openGroup('${g.code}')">
+      <div class="grp-ic">${g.ic}</div>
+      <div class="grp-m"><div class="n">${g.n}</div><div class="s">${g.mem} Mitglieder · ${g.lg}</div></div>
+      <div class="grp-r"><div><div class="p">${g.p}</div><div class="l">Platz</div></div>
+        <span class="ch"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+    </div>`).join('');
+}
+function toggleCreate(){ const f=document.getElementById('createForm'); f.style.display=f.style.display==='none'?'block':'none'; }
+function openGroup(code){
+  const g=GROUPS.find(x=>x.code===code); if(!g)return;
+  document.getElementById('grpList').style.display='none';
+  document.getElementById('grpDetail').style.display='block';
+  document.getElementById('gdIc').textContent=g.ic;
+  document.getElementById('gdName').textContent=g.n;
+  document.getElementById('gdSub').textContent=g.mem+' Mitglieder · '+g.lg;
+  document.getElementById('gdBal').textContent=fmt(g.bal)+' Münzen';
+  document.getElementById('gdRank').textContent=g.p;
+  gSelMD=CURRENT_MD; document.getElementById('gMdNum').textContent=CURRENT_MD+'. Spieltag'; renderGroupSpiele(); renderGdTable();
+  scheineFilter='alle'; renderMeScheine(); renderKonk();
+  document.querySelectorAll('#scheineFilter button').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('#gdSeg button').forEach((b,i)=>b.classList.toggle('active',i===0));
+  ['gdSpiele','gdScheine','gdKonk','gdTabelle'].forEach((id,i)=>document.getElementById(id).style.display=i===0?'':'none');
+  slip=[]; slipOpen=false; renderSlip();
+  document.getElementById('main').scrollTop=0;
+}
+function closeGroup(){
+  document.getElementById('grpDetail').style.display='none';
+  document.getElementById('grpList').style.display='block';
+  slip=[]; slipOpen=false; renderSlip();
+}
+function gdTab(w,btn){
+  document.querySelectorAll('#gdSeg button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.getElementById('gdSpiele').style.display=w==='spiele'?'':'none';
+  document.getElementById('gdScheine').style.display=w==='scheine'?'':'none';
+  document.getElementById('gdKonk').style.display=w==='konk'?'':'none';
+  document.getElementById('gdTabelle').style.display=w==='tabelle'?'':'none';
+}
+function renderGdTable(){
+  document.getElementById('gdTblRows').innerHTML=GRP_MEMBERS.map((m,i)=>{
+    const me=m[0]==='Lukas';
+    return `<div class="lb-row"><div class="lb-rk ${i<3?'top':''}">${i+1}</div><div class="lb-av">${m[0][0]}</div><div class="lb-m"><div class="n" style="${me?'color:var(--navy)':''}">${m[0]}${me?' (du)':''}</div></div><div class="lb-b" style="color:var(--ink)">${fmt(m[1])} Münzen</div></div>`;
+  }).join('');
+}
+
+function statusMeta(s){return {open:['Offen','var(--open)','#fff7e6'],win:['Gewonnen','var(--win)','#e8f7ee'],loss:['Verloren','var(--loss)','#fdeaea']}[s];}
+function slipCard(s,showMember){
+  const odds=s.picks.reduce((a,p)=>a*p.q,1);
+  const payout=Math.round(s.stake*odds);
+  const st=statusMeta(s.status);
+  const picks=s.picks.map(p=>{
+    const ic=p.res==='win'?'✓':p.res==='loss'?'✗':'•';
+    const col=p.res==='win'?'var(--win)':p.res==='loss'?'var(--loss)':'var(--ink-3)';
+    return `<div class="sp-pick"><span class="sp-ic" style="color:${col}">${ic}</span><div class="sp-info"><div class="sp-m">${p.m}</div><div class="sp-pk">${p.pick}</div></div><div class="sp-q">${p.q.toFixed(2)}</div></div>`;
+  }).join('');
+  const payVal=s.status==='loss'?('−'+fmt(s.stake)):((s.status==='win'?'+':'')+fmt(payout));
+  const payCol=s.status==='loss'?'var(--loss)':s.status==='win'?'var(--win)':'var(--ink)';
+  return `<div class="slip-card">
+    <div class="sc-top"><div class="sc-l">${showMember?`<span class="sc-av">${s.member[0]}</span>`:''}<span class="sc-type">${s.type}${showMember?' · '+s.member:''}</span></div>
+      <span class="badge" style="color:${st[1]};background:${st[2]}">${st[0]}</span></div>
+    <div class="sc-picks">${picks}</div>
+    <div class="sc-foot"><span>Einsatz <b>${fmt(s.stake)} Münzen</b> · Quote <b>${odds.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})}</b></span>
+      <span class="sc-pay" style="color:${payCol}">${payVal} Münzen</span></div>
+  </div>`;
+}
+function renderMeScheine(){
+  const list=SLIPS_ME.filter(s=>s.md===gSelMD).filter(s=>scheineFilter==='alle'?true:scheineFilter==='offen'?s.status==='open':s.status!=='open');
+  document.getElementById('meScheineList').innerHTML=list.length?list.map(s=>slipCard(s,false)).join(''):`<div class="empty">Keine eigenen Scheine am ${gSelMD}. Spieltag.</div>`;
+}
+function setScheineFilter(f,btn){scheineFilter=f;document.querySelectorAll('#scheineFilter button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderMeScheine();}
+function renderKonk(){
+  const list=SLIPS_OPP.filter(s=>s.md===gSelMD);
+  document.getElementById('konkList').innerHTML=list.length?list.map(s=>slipCard(s,true)).join(''):`<div class="empty">Keine Scheine der Mitspieler am ${gSelMD}. Spieltag.</div>`;
+}
+
+/* spieltag + matches (in group) */
+let mdCtx='group';
+function openMdPicker(ctx){ mdCtx=ctx; renderMdGrid(ctx==='group'?gSelMD:mSelMD); document.getElementById('mdBg').classList.add('show'); document.getElementById('mdSheet').classList.add('show'); }
+function closeMdPicker(){ document.getElementById('mdBg').classList.remove('show'); document.getElementById('mdSheet').classList.remove('show'); }
+function renderMdGrid(sel){
+  let h='';
+  for(let i=1;i<=34;i++){
+    const cls=i===sel?'sel':(i<CURRENT_MD?'done':(i>CURRENT_MD?'future':''));
+    h+=`<div class="md-cell ${cls}" onclick="chooseMd(${i})">${i}${i===CURRENT_MD?'<small>jetzt</small>':''}</div>`;
+  }
+  document.getElementById('mdGrid').innerHTML=h;
+}
+function chooseMd(i){
+  if(mdCtx==='group'){ gSelMD=i; document.getElementById('gMdNum').textContent=i+'. Spieltag'; renderGroupSpiele(); renderMeScheine(); renderKonk(); }
+  else { mSelMD=i; document.getElementById('mMdNum').textContent=i+'. Spieltag'; renderMatchupFix(); }
+  closeMdPicker();
+}
+function resultCard(m){
+  const hw=m.hs>m.as, aw=m.as>m.hs;
+  return `<div class="match"><div class="match-top"><span>Beendet</span><span class="tag" style="background:#eef0f4;color:var(--ink-2)">Endstand</span></div>
+    <div class="match-main">
+      <div class="tm"><div class="crest">${m.ha}</div><div class="tm-name" style="${hw?'font-weight:800;color:var(--ink)':''}">${m.h}</div></div>
+      <div class="res-score">${m.hs} : ${m.as}</div>
+      <div class="tm away"><div class="crest">${m.aa}</div><div class="tm-name" style="${aw?'font-weight:800;color:var(--ink)':''}">${m.a}</div></div>
+    </div></div>`;
+}
+function fixtureCard(m,locked){
+  return `<div class="match"><div class="match-top"><span>${m.t}</span>${locked?'<span class="tag" style="background:#eef0f4;color:var(--ink-2)">bald</span>':''}</div>
+    <div class="match-main">
+      <div class="tm"><div class="crest">${m.ha}</div><div class="tm-name">${m.h}</div></div>
+      <div class="match-vs">:</div>
+      <div class="tm away"><div class="crest">${m.aa}</div><div class="tm-name">${m.a}</div></div>
+    </div>${locked?'<div class="locked"><span class="ic">🔒</span> Tipps öffnen, sobald der Spieltag freigegeben ist</div>':''}</div>`;
+}
+function clearSlipUI(){ slip=[]; slipOpen=false; renderSlip(); }
+/* Gruppe: vergangen = Ergebnisse, aktuell = Tipps, künftig = gesperrt */
+function pickMdG(){}
+function renderGroupSpiele(){
+  const lbl=document.getElementById('gdMdLabel');
+  if(gSelMD<CURRENT_MD){ lbl.textContent='Spieltag '+gSelMD+' · Ergebnisse'; document.getElementById('matchList').innerHTML=RESULTS.map(resultCard).join(''); clearSlipUI(); }
+  else if(gSelMD===CURRENT_MD){ lbl.textContent='Spieltag '+gSelMD+' · Fr–So'; renderMatches(); }
+  else { lbl.textContent='Spieltag '+gSelMD+' · noch nicht freigegeben'; document.getElementById('matchList').innerHTML=MATCHES.map(m=>fixtureCard(m,true)).join(''); clearSlipUI(); }
+}
+/* Matchup: vergangen = Ergebnisse, sonst = Begegnungen (kein Tippen hier) */
+function pickMdM(){}
+function renderMatchupFix(){
+  const lbl=document.getElementById('muMdLabel');
+  if(mSelMD<CURRENT_MD){ lbl.textContent='Spieltag '+mSelMD+' · Ergebnisse'; document.getElementById('muMatchList').innerHTML=RESULTS.map(resultCard).join(''); }
+  else { lbl.textContent='Spieltag '+mSelMD+' · Begegnungen'; document.getElementById('muMatchList').innerHTML=MATCHES.map(m=>fixtureCard(m,false)).join(''); }
+}
+function renderMatches(){
+  let h='<div class="info-bar" style="background:#f4f6fa;border-color:var(--line);color:var(--ink-2)"><span>⏱️</span><span>Spieltag von Freitag bis Sonntag. Jedes Spiel schließt einzeln mit seinem Anpfiff – die übrigen bleiben offen.</span></div>';
+  MATCHES.forEach(m=>{
+    if(m.closed){h+=`<div class="match"><div class="match-top"><span>${m.t}</span><span class="tag" style="background:#eef0f4;color:var(--ink-2)">angepfiffen</span></div><div class="match-main"><div class="tm"><div class="crest">${m.ha}</div><div class="tm-name">${m.h}</div></div><div class="match-vs">:</div><div class="tm away"><div class="crest">${m.aa}</div><div class="tm-name">${m.a}</div></div></div><div class="locked"><span class="ic">🔒</span> Tipp für dieses Spiel geschlossen (Anpfiff)</div></div>`;return;}
+    const ob=Object.entries(m.o).map(([k,q])=>oddBtn(m,k,q)).join('');
+    const ub=Object.entries(m.ou).map(([k,q])=>oddBtn(m,k,q)).join('');
+    h+=`<div class="match"><div class="match-top"><span>${m.t}</span><span class="tag">Ergebnis</span></div><div class="match-main"><div class="tm"><div class="crest">${m.ha}</div><div class="tm-name">${m.h}</div></div><div class="match-vs">:</div><div class="tm away"><div class="crest">${m.aa}</div><div class="tm-name">${m.a}</div></div></div><div class="odds">${ob}</div><div class="more-row"><button class="more-btn" onclick="toggleExtra('${m.id}')"><span>Über/Unter Tore</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button></div><div class="extra" id="ex-${m.id}"><div class="extra-lbl">Tore über/unter 2,5</div><div class="odds" style="padding:0">${ub}</div></div></div>`;
+  });
+  document.getElementById('matchList').innerHTML=h; syncOddStates();
+}
+function oddBtn(m,k,q){return `<div class="odd" data-m="${m.id}" data-k="${k}" onclick="pick('${m.id}','${m.h} – ${m.a}','${k}',${q})"><div class="k">${k}</div><div class="q">${q.toFixed(2)}</div></div>`;}
+function toggleExtra(id){document.getElementById('ex-'+id).classList.toggle('open');}
+
+/* ====== BET SLIP ====== */
+function pick(id,mLabel,pk,q){
+  const ex=slip.find(s=>s.id===id);
+  if(ex&&ex.pick===pk) slip=slip.filter(s=>s.id!==id);
+  else if(ex){ex.pick=pk;ex.q=q;}
+  else slip.push({id,mLabel,pick:pk,q});
+  if(!slip.length)slipOpen=false;
+  syncOddStates(); renderSlip();
+}
+function syncOddStates(){document.querySelectorAll('.odd').forEach(o=>{o.classList.toggle('sel',!!slip.find(x=>x.id===o.dataset.m&&x.pick===o.dataset.k));});}
+function totalOdds(){return slip.reduce((a,s)=>a*s.q,1);}
+function tipName(k){return ({'1':'Heimsieg','X':'Unentschieden','2':'Auswärtssieg'})[k]||k;}
+function renderSlip(){
+  const e=document.getElementById('slip');
+  document.getElementById('slipCnt').textContent=slip.length;
+  const tot=totalOdds();
+  document.getElementById('slipQt').textContent=slip.length?tot.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}):'–';
+  document.getElementById('slipType').textContent=slip.length>1?slip.length+'er Kombi':'Einzelwette';
+  document.getElementById('slipPicks').innerHTML=slip.map(s=>`<div class="slip-pick"><div class="info"><div class="mt">${s.mLabel}</div><div class="pk">${tipName(s.pick)}</div></div><div class="q">${s.q.toFixed(2)}</div><button class="rm" onclick="removePick('${s.id}')">×</button></div>`).join('');
+  const stake=parseFloat(document.getElementById('stakeIn').value)||0;
+  document.getElementById('slipWin').textContent=(slip.length?fmt(stake*tot):'–')+' Münzen';
+  e.classList.toggle('show',slip.length>0);
+  e.classList.toggle('open',slipOpen&&slip.length>0);
+}
+function removePick(id){slip=slip.filter(s=>s.id!==id);if(!slip.length)slipOpen=false;syncOddStates();renderSlip();}
+function toggleSlip(){if(slip.length){slipOpen=!slipOpen;renderSlip();}}
+function setStake(v){document.getElementById('stakeIn').value=v;renderSlip();}
+function submitSlip(){const stake=parseFloat(document.getElementById('stakeIn').value)||0;toast('✅ Wette abgeschlossen · '+fmt(stake)+' Münzen Einsatz · '+fmt(Math.round(stake*totalOdds()))+' Münzen möglich');slip=[];slipOpen=false;syncOddStates();renderSlip();}
+
+/* ====== RANKING ====== */
+function renderRanking(){
+  document.getElementById('rankTotal').innerHTML=RANK_TOTAL.map((r,i)=>`<div class="lb-row"><div class="lb-rk ${i<3?'top':''}">${i+1}</div><div class="lb-av">${r[0][0]}</div><div class="lb-m"><div class="n">${r[0]}</div><div class="h">${r[2]} ${r[2]===1?'Gruppe':'Gruppen'}</div></div><div class="lb-b">${r[3]} Münzen</div></div>`).join('');
+  document.getElementById('rankSingle').innerHTML=RANK_SINGLE.map((r,i)=>`<div class="lb-row"><div class="lb-rk ${i<3?'top':''}">${i+1}</div><div class="lb-av">${r[0][0]}</div><div class="lb-m"><div class="n">${r[0]}</div><div class="h">${r[1]} · Quote ${r[2]}</div></div><div class="lb-b">${r[3]} Münzen</div></div>`).join('');
+}
+
+/* ====== HELP ====== */
+function renderFaq(){document.getElementById('faq').innerHTML=FAQ.map(f=>`<div class="acc"><div class="acc-h" onclick="this.parentElement.classList.toggle('open')"><span class="e">${f[0]}</span><span class="t">${f[1]}</span><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></div><div class="acc-b">${f[2]}</div></div>`).join('');}
+
+/* ====== EMOJI PICKER ====== */
+function renderEmoji(){document.getElementById('emojiPick').innerHTML=EMOJIS.map((e,i)=>`<button class="${i===0?'active':''}" onclick="this.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));this.classList.add('active')">${e}</button>`).join('');}
+
+/* ====== NAV ====== */
+function go(s,btn){
+  document.querySelectorAll('.screen').forEach(sc=>sc.classList.toggle('active',sc.dataset.s===s));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b===btn));
+  if(s!=='gruppen') closeGroup();   // leave group detail/slip when switching tabs
+  document.getElementById('main').scrollTop=0;
+}
+
+/* ====== TOAST ====== */
+let toastT;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
+
+/* INIT */
+selectLeague('bl1'); renderDash(); renderTable(); renderMatchupFix(); renderGroups(); renderRanking(); renderFaq(); renderEmoji(); renderSlip();
+</script>
+</body>
+</html>
