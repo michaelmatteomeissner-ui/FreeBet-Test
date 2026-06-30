@@ -1303,21 +1303,6 @@ function wmMatchCard(m){
 }
 function wmRoundLabel(r){ var map={'Round of 32':'Sechzehntelfinale','Round of 16':'Achtelfinale','Quarter-final':'Viertelfinale','Semi-final':'Halbfinale','Match for third place':'Spiel um Platz 3','Final':'Finale'}; if(/^Matchday/.test(r||'')) return 'Gruppenphase'; return map[r]||r; }
 function wmByDate(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); }
-function renderWM(ms){
-  var box=document.getElementById('muMatchList'); var html='';
-  var groups={}; ms.forEach(function(m){ if(/^Matchday/.test(m.round||'')){ (groups[m.group]=groups[m.group]||[]).push(m); } });
-  var gk=Object.keys(groups).sort();
-  if(gk.length){ html+='<div class="wm-phase">Gruppenphase</div>'; gk.forEach(function(g){ html+='<div class="wm-grp">'+(g||'').replace('Group','Gruppe')+'</div>'; groups[g].sort(wmByDate).forEach(function(m){ html+=wmMatchCard(m); }); }); }
-  ['Round of 32','Round of 16','Quarter-final','Semi-final','Match for third place','Final'].forEach(function(r){ var list=ms.filter(function(m){return m.round===r;}).sort(wmByDate); if(list.length){ html+='<div class="wm-phase">'+wmRoundLabel(r)+'</div>'; list.forEach(function(m){ html+=wmMatchCard(m); }); } });
-  box.innerHTML=html || '<div class="empty">Keine WM-Daten.</div>';
-}
-function loadWM(){
-  var box=document.getElementById('muMatchList'), lbl=document.getElementById('muMdLabel');
-  if(lbl) lbl.textContent='Turnierplan · WM 2026';
-  if(WM_CACHE){ renderWM(WM_CACHE); return; }
-  if(box) box.innerHTML='<div class="empty">Lädt WM-Spielplan …</div>';
-  proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; if(!ms.length){ if(box) box.innerHTML='<div class="empty">Keine WM-Daten verfügbar.</div>'; return; } WM_CACHE=ms; renderWM(ms); }).catch(function(){ if(box) box.innerHTML='<div class="empty">WM-Daten konnten nicht geladen werden. Bitte später erneut.</div>'; });
-}
 function wmGroupStandings(matches){
   var groups={};
   matches.forEach(function(m){
@@ -1333,31 +1318,6 @@ function wmGroupStandings(matches){
     }
   });
   return groups;
-}
-function renderWMTable(){
-  var host=document.getElementById('wmTable'); if(!host) return;
-  function build(matches){
-    var groups=wmGroupStandings(matches);
-    var keys=Object.keys(groups).sort();
-    if(!keys.length){ host.innerHTML='<div class="card"><div class="empty">Keine WM-Gruppendaten verfügbar.</div></div>'; return; }
-    var html='<div class="card" style="margin-bottom:10px"><div style="font-size:12px;color:var(--ink-2);line-height:1.7"><b style="color:var(--ink)">FIFA WM 2026</b><br>Kanada · USA · Mexiko · 48 Teams · 104 Spiele<br>11. Juni – 19. Juli 2026 · Top 2 je Gruppe weiter</div></div>';
-    keys.forEach(function(g){
-      var rows=[]; var gd=groups[g]; for(var tn in gd){ rows.push(gd[tn]); }
-      rows.sort(function(x,y){ return (y.pts-x.pts)||((y.gf-y.ga)-(x.gf-x.ga))||(y.gf-x.gf)||x.team.localeCompare(y.team); });
-      html+='<div class="wm-grp">'+g.replace('Group','Gruppe')+'</div>';
-      html+='<div class="card" style="padding:0;overflow:hidden;margin-bottom:10px"><table class="tbl"><thead><tr><th>#</th><th class="l">Team</th><th>Sp</th><th>Diff</th><th>Pkt</th></tr></thead><tbody>';
-      rows.forEach(function(r,i){
-        var diff=r.gf-r.ga, rank=String(i+1);
-        var rk=(i<2)?'<div class="rk g3">'+rank+'</div>':'<div class="rk">'+rank+'</div>';
-        html+='<tr><td>'+rk+'</td><td class="l"><div class="club"><div class="mini">'+wmCrest(r.team)+'</div><span class="cn">'+wmName(r.team)+'</span></div></td><td>'+r.sp+'</td><td>'+(diff>=0?'+':'')+diff+'</td><td class="pts">'+r.pts+'</td></tr>';
-      });
-      html+='</tbody></table></div>';
-    });
-    host.innerHTML=html;
-  }
-  if(WM_CACHE){ build(WM_CACHE); return; }
-  host.innerHTML='<div class="card"><div class="empty">Lädt WM-Tabellen …</div></div>';
-  proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; WM_CACHE=ms; build(ms); }).catch(function(){ host.innerHTML='<div class="card"><div class="empty">WM-Tabellen konnten nicht geladen werden. Bitte später erneut.</div></div>'; });
 }
 (function(){var s=document.createElement('style');s.textContent='.mini img.flag{width:100%;height:100%;object-fit:cover;border-radius:2px}.mini:has(img.flag){background:transparent;overflow:hidden}';document.head.appendChild(s);})();
 var _origSelectLeague=selectLeague;
@@ -1443,7 +1403,7 @@ function renderWMTable(){
       rows.sort(function(x,y){ return (y.pts-x.pts)||((y.gf-y.ga)-(x.gf-x.ga))||(y.gf-x.gf)||x.team.localeCompare(y.team); });
       html+='<table class="tbl wm-gt"><thead><tr><th>#</th><th class="l">Team</th><th>Sp</th><th>Diff</th><th>Pkt</th></tr></thead><tbody>';
       rows.forEach(function(r,i){ var diff=r.gf-r.ga; var rk=(i<2)?'<div class="rk g3">'+(i+1)+'</div>':'<div class="rk">'+(i+1)+'</div>'; html+='<tr><td>'+rk+'</td><td class="l"><div class="club"><div class="mini">'+wmCrest(r.team)+'</div>'+wmName(r.team)+'</div></td><td>'+r.sp+'</td><td>'+(diff>=0?'+':'')+diff+'</td><td class="pts">'+r.pts+'</td></tr>'; });
-      html+='</tbody></table><div class="wm-gc-m">';
+      html+='</tbody></table><div class="wm-gc-sep">Spiele & Ergebnisse</div><div class="wm-gc-m">';
       groups[g].sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); }).forEach(function(m){ html+=wmMiniRow(m); });
       html+='</div></div>';
     });
@@ -1458,7 +1418,7 @@ function renderWMTable(){
   host.innerHTML='<div class="card"><div class="empty">Lädt WM-Tabellen …</div></div>';
   proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; WM_CACHE=ms; WM_ROUND_KEYS=wmOrderedRounds(ms); build(ms); }).catch(function(){ host.innerHTML='<div class="card"><div class="empty">WM-Tabellen konnten nicht geladen werden. Bitte später erneut.</div></div>'; });
 }
-(function(){var s=document.createElement('style');s.textContent='.wm-rd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-radius:12px;background:var(--bg);margin-bottom:8px;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;border:1px solid var(--line)}.wm-rd.sel{background:#14336e;color:#fff;border-color:#14336e}.wm-rd small{font-size:11px;font-weight:700;color:var(--ink-3)}.wm-rd.sel small{color:#cfe0ff}.wm-gc{margin-bottom:12px}.wm-gc-h{font-size:14px;font-weight:900;color:var(--ink);margin:0 0 10px}.wm-gt{margin-bottom:10px}.wm-gc-m{display:flex;flex-direction:column;gap:7px;margin-top:2px}.wmr{display:flex;align-items:center;gap:8px;font-size:12.5px}.wmr-t{flex:1;display:flex;align-items:center;gap:6px;min-width:0}.wmr-t.r{justify-content:flex-end;text-align:right}.wmr-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wmr-f{width:20px;height:14px;flex-shrink:0;display:inline-flex;border-radius:2px;overflow:hidden;background:#eef}.wmr-f img.flag{width:100%;height:100%;object-fit:cover}.wmr-s{min-width:56px;text-align:center;font-size:12px;color:var(--ink-2)}.wmr-d{font-size:11px;color:var(--ink-3)}.wm-gt{table-layout:fixed;width:100%}.wm-gt th:first-child,.wm-gt td:first-child{width:38px}.wm-gt th:nth-child(3),.wm-gt td:nth-child(3){width:40px}.wm-gt th:nth-child(4),.wm-gt td:nth-child(4){width:48px}.wm-gt th:nth-child(5),.wm-gt td:nth-child(5){width:44px}.wm-gt .club{min-width:0}.wm-gt .club .cn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.wm-info{padding:14px}.wm-info-t{font-size:15px;font-weight:900;color:var(--ink)}.wm-info-s{font-size:13px;color:var(--ink-2);margin-top:3px}.wm-info-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}.wm-info-meta span{font-size:11px;font-weight:700;color:#14336e;background:#eef1f6;border-radius:999px;padding:4px 11px}.wm-info-note{font-size:11.5px;color:var(--ink-3);margin-top:9px}.wm-rd span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}';document.head.appendChild(s);})();
+(function(){var s=document.createElement('style');s.textContent='.wm-rd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-radius:12px;background:var(--bg);margin-bottom:8px;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;border:1px solid var(--line)}.wm-rd.sel{background:#14336e;color:#fff;border-color:#14336e}.wm-rd small{font-size:11px;font-weight:700;color:var(--ink-3)}.wm-rd.sel small{color:#cfe0ff}.wm-gc{margin-bottom:12px;padding:14px}.wm-gc-sep{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3);margin:14px 0 9px;padding-top:13px;border-top:1px solid var(--line)}.wm-gc-h{font-size:14px;font-weight:900;color:var(--ink);margin:0 0 10px}.wm-gt{margin-bottom:0}.wm-gc-m{display:flex;flex-direction:column;gap:7px}.wmr{display:flex;align-items:center;gap:8px;font-size:12.5px}.wmr-t{flex:1;display:flex;align-items:center;gap:6px;min-width:0}.wmr-t.r{justify-content:flex-end;text-align:right}.wmr-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wmr-f{width:20px;height:14px;flex-shrink:0;display:inline-flex;border-radius:2px;overflow:hidden;background:#eef}.wmr-f img.flag{width:100%;height:100%;object-fit:cover}.wmr-s{min-width:56px;text-align:center;font-size:12px;color:var(--ink-2)}.wmr-d{font-size:11px;color:var(--ink-3)}.wm-gt{table-layout:fixed;width:100%}.wm-gt th:first-child,.wm-gt td:first-child{width:38px}.wm-gt th:nth-child(3),.wm-gt td:nth-child(3){width:40px}.wm-gt th:nth-child(4),.wm-gt td:nth-child(4){width:48px}.wm-gt th:nth-child(5),.wm-gt td:nth-child(5){width:44px}.wm-gt .club{min-width:0}.wm-gt .club .cn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.wm-info{padding:14px}.wm-info-t{font-size:15px;font-weight:900;color:var(--ink)}.wm-info-s{font-size:13px;color:var(--ink-2);margin-top:3px}.wm-info-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}.wm-info-meta span{font-size:11px;font-weight:700;color:#14336e;background:#eef1f6;border-radius:999px;padding:4px 11px}.wm-info-note{font-size:11.5px;color:var(--ink-3);margin-top:9px}.wm-rd span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}';document.head.appendChild(s);})();
 </script>
 </body>
 </html>
