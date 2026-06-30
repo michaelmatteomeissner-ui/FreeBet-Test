@@ -1349,7 +1349,7 @@ function renderWMTable(){
       rows.forEach(function(r,i){
         var diff=r.gf-r.ga, rank=String(i+1);
         var rk=(i<2)?'<div class="rk g3">'+rank+'</div>':'<div class="rk">'+rank+'</div>';
-        html+='<tr><td>'+rk+'</td><td class="l"><div class="club"><div class="mini">'+wmCrest(r.team)+'</div>'+wmName(r.team)+'</div></td><td>'+r.sp+'</td><td>'+(diff>=0?'+':'')+diff+'</td><td class="pts">'+r.pts+'</td></tr>';
+        html+='<tr><td>'+rk+'</td><td class="l"><div class="club"><div class="mini">'+wmCrest(r.team)+'</div><span class="cn">'+wmName(r.team)+'</span></div></td><td>'+r.sp+'</td><td>'+(diff>=0?'+':'')+diff+'</td><td class="pts">'+r.pts+'</td></tr>';
       });
       html+='</tbody></table></div>';
     });
@@ -1412,14 +1412,14 @@ function renderMatchupFix(){
 function renderMdGrid(sel){
   var grid=document.getElementById('mdGrid');
   if(activeLeague==='wm2026' && mdCtx==='matchup'){
-    grid.style.display='block';
+    grid.removeAttribute('style'); grid.style.display='block'; grid.style.maxHeight='54vh'; grid.style.overflowY='auto';
     var keys=WM_ROUND_KEYS.length?WM_ROUND_KEYS:(WM_CACHE?wmOrderedRounds(WM_CACHE):[]);
     var cur=wmSelRound||wmCurrentRound(WM_CACHE||[]);
-    var h=''; keys.forEach(function(r,idx){ h+='<div class="wm-rd'+(r===wmSelRound?' sel':'')+'" onclick="chooseWmRound('+idx+')"><span>'+wmRoundLabelDe(r)+'</span>'+(r===cur?'<small>aktuell</small>':'')+'</div>'; });
+    var h=''; keys.forEach(function(r,idx){ var _mm=/^Matchday (\d+)/.exec(r); var _lb=_mm?('Spieltag '+_mm[1]):wmRoundLabelDe(r); h+='<div class="wm-rd'+(r===wmSelRound?' sel':'')+'" onclick="chooseWmRound('+idx+')"><span>'+_lb+'</span>'+(r===cur?'<small>aktuell</small>':'')+'</div>'; });
     grid.innerHTML=h||'<div class="empty" style="padding:10px">Lädt …</div>';
     return;
   }
-  grid.style.display='';
+  grid.removeAttribute('style');
   var hh=''; for(var i=1;i<=34;i++){ var cls=i===sel?'sel':(i<CURRENT_MD?'done':(i>CURRENT_MD?'future':'')); hh+='<div class="md-cell '+cls+'" onclick="chooseMd('+i+')">'+i+(i===CURRENT_MD?'<small>jetzt</small>':'')+'</div>'; }
   grid.innerHTML=hh;
 }
@@ -1436,7 +1436,7 @@ function renderWMTable(){
     ms.forEach(function(m){ var g=m.group; if(!g||!/^Matchday/.test(m.round||'')) return; if(!groups[g]){ groups[g]=[]; order.push(g); } groups[g].push(m); });
     order.sort();
     var stand=wmGroupStandings(ms);
-    var html='<div class="card" style="margin-bottom:12px"><div style="font-size:12px;color:var(--ink-2);line-height:1.7"><b style="color:var(--ink)">FIFA WM 2026</b><br>Kanada · USA · Mexiko · 48 Teams · 104 Spiele<br>11. Juni – 19. Juli 2026 · Top 2 je Gruppe weiter</div></div>';
+    var html='<div class="card wm-info"><div class="wm-info-t">FIFA WM 2026</div><div class="wm-info-s">Kanada · USA · Mexiko</div><div class="wm-info-meta"><span>48 Teams</span><span>104 Spiele</span><span>11.6. – 19.7.2026</span></div><div class="wm-info-note">Top 2 je Gruppe ziehen weiter</div></div>';
     order.forEach(function(g){
       html+='<div class="card wm-gc"><div class="wm-gc-h">'+g.replace('Group','Gruppe')+'</div>';
       var rows=[]; var gd=stand[g]||{}; for(var tn in gd){ rows.push(gd[tn]); }
@@ -1458,7 +1458,7 @@ function renderWMTable(){
   host.innerHTML='<div class="card"><div class="empty">Lädt WM-Tabellen …</div></div>';
   proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; WM_CACHE=ms; WM_ROUND_KEYS=wmOrderedRounds(ms); build(ms); }).catch(function(){ host.innerHTML='<div class="card"><div class="empty">WM-Tabellen konnten nicht geladen werden. Bitte später erneut.</div></div>'; });
 }
-(function(){var s=document.createElement('style');s.textContent='.wm-rd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-radius:12px;background:var(--bg);margin-bottom:8px;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;border:1px solid var(--line)}.wm-rd.sel{background:#14336e;color:#fff;border-color:#14336e}.wm-rd small{font-size:11px;font-weight:700;color:var(--ink-3)}.wm-rd.sel small{color:#cfe0ff}.wm-gc{margin-bottom:12px}.wm-gc-h{font-size:14px;font-weight:900;color:var(--ink);margin:0 0 10px}.wm-gt{margin-bottom:10px}.wm-gc-m{display:flex;flex-direction:column;gap:7px;margin-top:2px}.wmr{display:flex;align-items:center;gap:8px;font-size:12.5px}.wmr-t{flex:1;display:flex;align-items:center;gap:6px;min-width:0}.wmr-t.r{justify-content:flex-end;text-align:right}.wmr-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wmr-f{width:20px;height:14px;flex-shrink:0;display:inline-flex;border-radius:2px;overflow:hidden;background:#eef}.wmr-f img.flag{width:100%;height:100%;object-fit:cover}.wmr-s{min-width:56px;text-align:center;font-size:12px;color:var(--ink-2)}.wmr-d{font-size:11px;color:var(--ink-3)}';document.head.appendChild(s);})();
+(function(){var s=document.createElement('style');s.textContent='.wm-rd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-radius:12px;background:var(--bg);margin-bottom:8px;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;border:1px solid var(--line)}.wm-rd.sel{background:#14336e;color:#fff;border-color:#14336e}.wm-rd small{font-size:11px;font-weight:700;color:var(--ink-3)}.wm-rd.sel small{color:#cfe0ff}.wm-gc{margin-bottom:12px}.wm-gc-h{font-size:14px;font-weight:900;color:var(--ink);margin:0 0 10px}.wm-gt{margin-bottom:10px}.wm-gc-m{display:flex;flex-direction:column;gap:7px;margin-top:2px}.wmr{display:flex;align-items:center;gap:8px;font-size:12.5px}.wmr-t{flex:1;display:flex;align-items:center;gap:6px;min-width:0}.wmr-t.r{justify-content:flex-end;text-align:right}.wmr-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wmr-f{width:20px;height:14px;flex-shrink:0;display:inline-flex;border-radius:2px;overflow:hidden;background:#eef}.wmr-f img.flag{width:100%;height:100%;object-fit:cover}.wmr-s{min-width:56px;text-align:center;font-size:12px;color:var(--ink-2)}.wmr-d{font-size:11px;color:var(--ink-3)}.wm-gt{table-layout:fixed;width:100%}.wm-gt th:first-child,.wm-gt td:first-child{width:38px}.wm-gt th:nth-child(3),.wm-gt td:nth-child(3){width:40px}.wm-gt th:nth-child(4),.wm-gt td:nth-child(4){width:48px}.wm-gt th:nth-child(5),.wm-gt td:nth-child(5){width:44px}.wm-gt .club{min-width:0}.wm-gt .club .cn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.wm-info{padding:14px}.wm-info-t{font-size:15px;font-weight:900;color:var(--ink)}.wm-info-s{font-size:13px;color:var(--ink-2);margin-top:3px}.wm-info-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}.wm-info-meta span{font-size:11px;font-weight:700;color:#14336e;background:#eef1f6;border-radius:999px;padding:4px 11px}.wm-info-note{font-size:11.5px;color:var(--ink-3);margin-top:9px}.wm-rd span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}';document.head.appendChild(s);})();
 </script>
 </body>
 </html>
