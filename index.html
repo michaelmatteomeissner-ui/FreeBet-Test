@@ -1373,5 +1373,92 @@ selectLeague=function(id){
 
 renderTable(); renderMatchupFix(); olInitCurrentMatchday();
 </script>
+<script>
+/* ===== WM 2026 – Spieltag-Filter (Begegnungen) + Tabelle wie Original (neues Design) ===== */
+var WM_ROUND_KEYS=[]; var wmSelRound=null;
+function wmOrderedRounds(ms){
+  var minD={}; ms.forEach(function(m){ var r=m.round||'?'; var d=m.date||'9999'; if(!minD[r]||d<minD[r]) minD[r]=d; });
+  return Object.keys(minD).sort(function(a,b){ return minD[a].localeCompare(minD[b]); });
+}
+function wmCurrentRound(ms){
+  var rounds=wmOrderedRounds(ms);
+  for(var i=0;i<rounds.length;i++){ var r=rounds[i]; if(ms.some(function(m){ return (m.round||'?')===r && !(m.score&&m.score.ft); })) return r; }
+  return rounds[rounds.length-1]||null;
+}
+function wmRoundLabelDe(r){
+  var mm=/^Matchday (\d+)/.exec(r||''); if(mm) return 'Spieltag '+mm[1]+' · Gruppen';
+  var map={'Round of 32':'Sechzehntelfinale','Round of 16':'Achtelfinale','Quarter-final':'Viertelfinale','Semi-final':'Halbfinale','Match for third place':'Spiel um Platz 3','Final':'Finale'};
+  return map[r]||r;
+}
+function renderWMRound(){
+  var box=document.getElementById('muMatchList'), lbl=document.getElementById('muMdLabel'), mn=document.getElementById('mMdNum');
+  if(!WM_CACHE||!WM_CACHE.length){ if(box) box.innerHTML='<div class="empty">Keine WM-Daten verfügbar.</div>'; return; }
+  if(!wmSelRound) wmSelRound=wmCurrentRound(WM_CACHE);
+  if(mn) mn.textContent=wmRoundLabelDe(wmSelRound);
+  if(lbl) lbl.textContent='WM 2026 · '+wmRoundLabelDe(wmSelRound);
+  var list=WM_CACHE.filter(function(m){ return (m.round||'?')===wmSelRound; }).sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); });
+  box.innerHTML = list.length ? list.map(wmMatchCard).join('') : '<div class="empty">Keine Spiele in dieser Runde.</div>';
+}
+function loadWM(){
+  var box=document.getElementById('muMatchList');
+  if(WM_CACHE){ if(!WM_ROUND_KEYS.length) WM_ROUND_KEYS=wmOrderedRounds(WM_CACHE); renderWMRound(); return; }
+  if(box) box.innerHTML='<div class="empty">Lädt WM-Spielplan …</div>';
+  proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; if(!ms.length){ if(box) box.innerHTML='<div class="empty">Keine WM-Daten verfügbar.</div>'; return; } WM_CACHE=ms; WM_ROUND_KEYS=wmOrderedRounds(ms); wmSelRound=wmCurrentRound(ms); renderWMRound(); }).catch(function(){ if(box) box.innerHTML='<div class="empty">WM-Daten konnten nicht geladen werden. Bitte später erneut.</div>'; });
+}
+function renderMatchupFix(){
+  var pick=document.querySelector('#muFix .md-pick'); if(pick) pick.style.display='';
+  if(activeLeague==='wm2026'){ loadWM(); } else { loadMatchupMatches(); }
+}
+function renderMdGrid(sel){
+  var grid=document.getElementById('mdGrid');
+  if(activeLeague==='wm2026' && mdCtx==='matchup'){
+    grid.style.display='block';
+    var keys=WM_ROUND_KEYS.length?WM_ROUND_KEYS:(WM_CACHE?wmOrderedRounds(WM_CACHE):[]);
+    var cur=wmSelRound||wmCurrentRound(WM_CACHE||[]);
+    var h=''; keys.forEach(function(r,idx){ h+='<div class="wm-rd'+(r===wmSelRound?' sel':'')+'" onclick="chooseWmRound('+idx+')"><span>'+wmRoundLabelDe(r)+'</span>'+(r===cur?'<small>aktuell</small>':'')+'</div>'; });
+    grid.innerHTML=h||'<div class="empty" style="padding:10px">Lädt …</div>';
+    return;
+  }
+  grid.style.display='';
+  var hh=''; for(var i=1;i<=34;i++){ var cls=i===sel?'sel':(i<CURRENT_MD?'done':(i>CURRENT_MD?'future':'')); hh+='<div class="md-cell '+cls+'" onclick="chooseMd('+i+')">'+i+(i===CURRENT_MD?'<small>jetzt</small>':'')+'</div>'; }
+  grid.innerHTML=hh;
+}
+function chooseWmRound(idx){ var keys=WM_ROUND_KEYS.length?WM_ROUND_KEYS:(WM_CACHE?wmOrderedRounds(WM_CACHE):[]); wmSelRound=keys[idx]; renderWMRound(); closeMdPicker(); }
+function wmMiniRow(m){
+  var f1=wmCrest(m.team1), f2=wmCrest(m.team2), mid;
+  if(m.score&&m.score.ft){ mid='<b>'+m.score.ft[0]+':'+m.score.ft[1]+'</b>'; } else { mid='<span class="wmr-d">'+(wmDate(m.date)||'TBD')+'</span>'; }
+  return '<div class="wmr"><span class="wmr-t"><span class="wmr-f">'+f1+'</span><span class="wmr-n">'+wmName(m.team1)+'</span></span><span class="wmr-s">'+mid+'</span><span class="wmr-t r"><span class="wmr-n">'+wmName(m.team2)+'</span><span class="wmr-f">'+f2+'</span></span></div>';
+}
+function renderWMTable(){
+  var host=document.getElementById('wmTable'); if(!host) return;
+  function build(ms){
+    var groups={}, order=[];
+    ms.forEach(function(m){ var g=m.group; if(!g||!/^Matchday/.test(m.round||'')) return; if(!groups[g]){ groups[g]=[]; order.push(g); } groups[g].push(m); });
+    order.sort();
+    var stand=wmGroupStandings(ms);
+    var html='<div class="card" style="margin-bottom:12px"><div style="font-size:12px;color:var(--ink-2);line-height:1.7"><b style="color:var(--ink)">FIFA WM 2026</b><br>Kanada · USA · Mexiko · 48 Teams · 104 Spiele<br>11. Juni – 19. Juli 2026 · Top 2 je Gruppe weiter</div></div>';
+    order.forEach(function(g){
+      html+='<div class="card wm-gc"><div class="wm-gc-h">'+g.replace('Group','Gruppe')+'</div>';
+      var rows=[]; var gd=stand[g]||{}; for(var tn in gd){ rows.push(gd[tn]); }
+      rows.sort(function(x,y){ return (y.pts-x.pts)||((y.gf-y.ga)-(x.gf-x.ga))||(y.gf-x.gf)||x.team.localeCompare(y.team); });
+      html+='<table class="tbl wm-gt"><thead><tr><th>#</th><th class="l">Team</th><th>Sp</th><th>Diff</th><th>Pkt</th></tr></thead><tbody>';
+      rows.forEach(function(r,i){ var diff=r.gf-r.ga; var rk=(i<2)?'<div class="rk g3">'+(i+1)+'</div>':'<div class="rk">'+(i+1)+'</div>'; html+='<tr><td>'+rk+'</td><td class="l"><div class="club"><div class="mini">'+wmCrest(r.team)+'</div>'+wmName(r.team)+'</div></td><td>'+r.sp+'</td><td>'+(diff>=0?'+':'')+diff+'</td><td class="pts">'+r.pts+'</td></tr>'; });
+      html+='</tbody></table><div class="wm-gc-m">';
+      groups[g].sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); }).forEach(function(m){ html+=wmMiniRow(m); });
+      html+='</div></div>';
+    });
+    var koOrder=['Round of 32','Round of 16','Quarter-final','Semi-final','Match for third place','Final'];
+    if(koOrder.some(function(r){ return ms.some(function(m){ return (m.round||'')===r; }); })){
+      html+='<div class="wm-grp" style="margin-top:6px">K.-o.-Runde</div>';
+      koOrder.forEach(function(r){ var list=ms.filter(function(m){ return (m.round||'')===r; }).sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); }); if(!list.length) return; html+='<div class="card wm-gc"><div class="wm-gc-h">'+wmRoundLabelDe(r)+'</div><div class="wm-gc-m">'; list.forEach(function(m){ html+=wmMiniRow(m); }); html+='</div></div>'; });
+    }
+    host.innerHTML=html;
+  }
+  if(WM_CACHE){ build(WM_CACHE); return; }
+  host.innerHTML='<div class="card"><div class="empty">Lädt WM-Tabellen …</div></div>';
+  proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; WM_CACHE=ms; WM_ROUND_KEYS=wmOrderedRounds(ms); build(ms); }).catch(function(){ host.innerHTML='<div class="card"><div class="empty">WM-Tabellen konnten nicht geladen werden. Bitte später erneut.</div></div>'; });
+}
+(function(){var s=document.createElement('style');s.textContent='.wm-rd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-radius:12px;background:var(--bg);margin-bottom:8px;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;border:1px solid var(--line)}.wm-rd.sel{background:#14336e;color:#fff;border-color:#14336e}.wm-rd small{font-size:11px;font-weight:700;color:var(--ink-3)}.wm-rd.sel small{color:#cfe0ff}.wm-gc{margin-bottom:12px}.wm-gc-h{font-size:14px;font-weight:900;color:var(--ink);margin:0 0 10px}.wm-gt{margin-bottom:10px}.wm-gc-m{display:flex;flex-direction:column;gap:7px;margin-top:2px}.wmr{display:flex;align-items:center;gap:8px;font-size:12.5px}.wmr-t{flex:1;display:flex;align-items:center;gap:6px;min-width:0}.wmr-t.r{justify-content:flex-end;text-align:right}.wmr-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wmr-f{width:20px;height:14px;flex-shrink:0;display:inline-flex;border-radius:2px;overflow:hidden;background:#eef}.wmr-f img.flag{width:100%;height:100%;object-fit:cover}.wmr-s{min-width:56px;text-align:center;font-size:12px;color:var(--ink-2)}.wmr-d{font-size:11px;color:var(--ink-3)}';document.head.appendChild(s);})();
+</script>
 </body>
 </html>
