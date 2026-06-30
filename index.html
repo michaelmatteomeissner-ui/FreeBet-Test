@@ -540,6 +540,7 @@ fbAuth.onAuthStateChanged(function(user){
           <div id="tblNone" style="display:none">
             <div class="card"><div class="locked"><span class="ic">🏆</span> Turniermodus – keine klassische Tabelle</div></div>
           </div>
+          <div id="wmTable" style="display:none"></div>
         </div>
       </div>
     </section>
@@ -1317,8 +1318,58 @@ function loadWM(){
   if(box) box.innerHTML='<div class="empty">Lädt WM-Spielplan …</div>';
   proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; if(!ms.length){ if(box) box.innerHTML='<div class="empty">Keine WM-Daten verfügbar.</div>'; return; } WM_CACHE=ms; renderWM(ms); }).catch(function(){ if(box) box.innerHTML='<div class="empty">WM-Daten konnten nicht geladen werden. Bitte später erneut.</div>'; });
 }
+function wmGroupStandings(matches){
+  var groups={};
+  matches.forEach(function(m){
+    if(!/^Matchday/.test(m.round||'')) return;
+    var g=m.group; if(!g) return;
+    if(!groups[g]) groups[g]={};
+    function ensure(tn){ if(!groups[g][tn]) groups[g][tn]={team:tn,sp:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}; return groups[g][tn]; }
+    var a=ensure(m.team1), b=ensure(m.team2);
+    if(m.score && m.score.ft){
+      var s1=m.score.ft[0], s2=m.score.ft[1];
+      a.sp++; b.sp++; a.gf+=s1; a.ga+=s2; b.gf+=s2; b.ga+=s1;
+      if(s1>s2){ a.w++; b.l++; a.pts+=3; } else if(s1<s2){ b.w++; a.l++; b.pts+=3; } else { a.d++; b.d++; a.pts++; b.pts++; }
+    }
+  });
+  return groups;
+}
+function renderWMTable(){
+  var host=document.getElementById('wmTable'); if(!host) return;
+  function build(matches){
+    var groups=wmGroupStandings(matches);
+    var keys=Object.keys(groups).sort();
+    if(!keys.length){ host.innerHTML='<div class="card"><div class="empty">Keine WM-Gruppendaten verfügbar.</div></div>'; return; }
+    var html='<div class="card" style="margin-bottom:10px"><div style="font-size:12px;color:var(--ink-2);line-height:1.7"><b style="color:var(--ink)">FIFA WM 2026</b><br>Kanada · USA · Mexiko · 48 Teams · 104 Spiele<br>11. Juni – 19. Juli 2026 · Top 2 je Gruppe weiter</div></div>';
+    keys.forEach(function(g){
+      var rows=[]; var gd=groups[g]; for(var tn in gd){ rows.push(gd[tn]); }
+      rows.sort(function(x,y){ return (y.pts-x.pts)||((y.gf-y.ga)-(x.gf-x.ga))||(y.gf-x.gf)||x.team.localeCompare(y.team); });
+      html+='<div class="wm-grp">'+g.replace('Group','Gruppe')+'</div>';
+      html+='<div class="card" style="padding:0;overflow:hidden;margin-bottom:10px"><table class="tbl"><thead><tr><th>#</th><th class="l">Team</th><th>Sp</th><th>Diff</th><th>Pkt</th></tr></thead><tbody>';
+      rows.forEach(function(r,i){
+        var diff=r.gf-r.ga, rank=String(i+1);
+        var rk=(i<2)?'<div class="rk g3">'+rank+'</div>':'<div class="rk">'+rank+'</div>';
+        html+='<tr><td>'+rk+'</td><td class="l"><div class="club"><div class="mini">'+wmCrest(r.team)+'</div>'+wmName(r.team)+'</div></td><td>'+r.sp+'</td><td>'+(diff>=0?'+':'')+diff+'</td><td class="pts">'+r.pts+'</td></tr>';
+      });
+      html+='</tbody></table></div>';
+    });
+    host.innerHTML=html;
+  }
+  if(WM_CACHE){ build(WM_CACHE); return; }
+  host.innerHTML='<div class="card"><div class="empty">Lädt WM-Tabellen …</div></div>';
+  proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; WM_CACHE=ms; build(ms); }).catch(function(){ host.innerHTML='<div class="card"><div class="empty">WM-Tabellen konnten nicht geladen werden. Bitte später erneut.</div></div>'; });
+}
+(function(){var s=document.createElement('style');s.textContent='.mini img.flag{width:100%;height:100%;object-fit:cover;border-radius:2px}.mini:has(img.flag){background:transparent;overflow:hidden}';document.head.appendChild(s);})();
 var _origSelectLeague=selectLeague;
-selectLeague=function(id){ _origSelectLeague(id); renderMatchupFix(); if(id==='bl1') renderTable(); };
+selectLeague=function(id){
+  _origSelectLeague(id);
+  var wmT=document.getElementById('wmTable'); var none=document.getElementById('tblNone');
+  if(wmT) wmT.style.display=(id==='wm2026')?'':'none';
+  if(none) none.style.display='none';
+  renderMatchupFix();
+  if(id==='bl1') renderTable();
+  else if(id==='wm2026') renderWMTable();
+};
 
 renderTable(); renderMatchupFix(); olInitCurrentMatchday();
 </script>
