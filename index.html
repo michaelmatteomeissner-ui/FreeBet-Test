@@ -483,7 +483,7 @@ fbAuth.onAuthStateChanged(function(user){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 7</div>
+        <div class="hdr-sub2">Tippspiel · Build 8</div>
       </div>
     </div>
   </header>
@@ -556,16 +556,16 @@ fbAuth.onAuthStateChanged(function(user){
         </div>
         <div class="card">
           <div class="card-h"><h2>Gruppe beitreten</h2><p>Einladungscode deiner Freunde eingeben.</p></div>
-          <div class="code-row" style="padding-top:14px"><input class="code-in" placeholder="z. B. FB-7K2QX" maxlength="9"><button class="btn btn-navy">Beitreten</button></div>
+          <div class="code-row" style="padding-top:14px"><input id="joinCode" class="code-in" placeholder="z. B. AB3KX" maxlength="9"><button class="btn btn-navy" onclick="fbDoJoin()">Beitreten</button></div>
           <button class="btn btn-ghost" onclick="toggleCreate()">+ Neue Gruppe erstellen</button>
           <!-- create form -->
           <div id="createForm" style="display:none;border-top:1px solid var(--line-2);padding-top:12px">
-            <div class="field"><label>Gruppenname</label><input placeholder="z. B. Büro-Liga"></div>
-            <div class="field"><label>Liga</label><select><option>Bundesliga</option><option>🌍 WM 2026</option></select></div>
+            <div class="field"><label>Gruppenname</label><input id="cgName" placeholder="z. B. Büro-Liga"></div>
+            <div class="field"><label>Liga</label><select id="cgLeague"><option value="bl1">Bundesliga</option><option value="wm2026">🌍 WM 2026</option></select></div>
             <div class="field" style="padding-bottom:4px"><label>Icon für die Gruppe</label></div>
             <div class="emoji-pick" id="emojiPick"></div>
-            <div class="field"><label>Startguthaben</label><input type="number" value="1000"></div>
-            <button class="btn btn-navy" style="width:calc(100% - 32px);margin:0 16px 14px" onclick="toast('Gruppe erstellt (Prototyp)')">Gruppe erstellen</button>
+            <div class="field"><label>Startguthaben</label><input id="cgBal" type="number" value="1000"></div>
+            <button class="btn btn-navy" style="width:calc(100% - 32px);margin:0 16px 14px" onclick="fbDoCreate()">Gruppe erstellen</button>
           </div>
         </div>
         <div>
@@ -1419,6 +1419,293 @@ function renderWMTable(){
   proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; WM_CACHE=ms; WM_ROUND_KEYS=wmOrderedRounds(ms); build(ms); }).catch(function(){ host.innerHTML='<div class="card"><div class="empty">WM-Tabellen konnten nicht geladen werden. Bitte später erneut.</div></div>'; });
 }
 (function(){var s=document.createElement('style');s.textContent='.wm-rd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-radius:12px;background:var(--bg);margin-bottom:8px;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;border:1px solid var(--line)}.wm-rd.sel{background:#14336e;color:#fff;border-color:#14336e}.wm-rd small{font-size:11px;font-weight:700;color:var(--ink-3)}.wm-rd.sel small{color:#cfe0ff}.wm-gc{margin-bottom:12px;padding:14px;overflow:visible}.wm-gc-sep{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3);margin:14px 0 9px;padding-top:13px;border-top:1px solid var(--line)}.wm-gc-h{font-size:14px;font-weight:900;color:var(--ink);margin:0 0 10px}.wm-gt{margin-bottom:0}.wm-gc-m{display:flex;flex-direction:column;gap:7px}.wmr{display:flex;align-items:center;gap:8px;font-size:12.5px}.wmr-t{flex:1;display:flex;align-items:center;gap:6px;min-width:0}.wmr-t.r{justify-content:flex-end;text-align:right}.wmr-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wmr-f{width:20px;height:14px;flex-shrink:0;display:inline-flex;border-radius:2px;overflow:hidden;background:#eef}.wmr-f img.flag{width:100%;height:100%;object-fit:cover}.wmr-s{min-width:56px;text-align:center;font-size:12px;color:var(--ink-2)}.wmr-d{font-size:11px;color:var(--ink-3)}.wm-gt{table-layout:fixed;width:100%}.wm-gt th:first-child,.wm-gt td:first-child{width:38px}.wm-gt th:nth-child(3),.wm-gt td:nth-child(3){width:40px}.wm-gt th:nth-child(4),.wm-gt td:nth-child(4){width:48px}.wm-gt th:nth-child(5),.wm-gt td:nth-child(5){width:44px}.wm-gt .club{min-width:0}.wm-gt .club .cn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.wm-info{padding:14px}.wm-info-t{font-size:15px;font-weight:900;color:var(--ink)}.wm-info-s{font-size:13px;color:var(--ink-2);margin-top:3px}.wm-info-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}.wm-info-meta span{font-size:11px;font-weight:700;color:#14336e;background:#eef1f6;border-radius:999px;padding:4px 11px}.wm-info-note{font-size:11.5px;color:var(--ink-3);margin-top:9px}.wm-rd span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}';document.head.appendChild(s);})();
+</script>
+<script>
+/* ===== Stage B2.2 – Gruppen + Guthaben aus Firebase (Test-DB), UID-basiert ===== */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function fbDB(){ return firebase.database(); }
+function fbUid(){ return (FB_USER && FB_USER.uid) || null; }
+function fbUserName(){ return (FB_USER && (FB_USER.displayName)) || 'Spieler'; }
+function genCode(){ var c='', s='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; for(var i=0;i<5;i++) c+=s[Math.floor(Math.random()*s.length)]; return c; }
+var MY_GROUPS=[]; var CUR_GROUP=null; var CUR_MEMBERS=[];
+
+function fbCreateGroup(name, league, startBal, icon){
+  var uid=fbUid(); if(!uid) return Promise.reject(new Error('Bitte zuerst anmelden'));
+  var code=genCode();
+  var g={ name:name, league:league, icon:icon||'⚽', ownerUid:uid, createdAt:new Date().toISOString(), startBalance:startBal, members:{} };
+  g.members[uid]={ name:fbUserName(), balance:startBal, joinedAt:new Date().toISOString() };
+  return fbDB().ref('groups/'+code).set(g)
+    .then(function(){ return fbDB().ref('users/'+uid+'/groups/'+code).set(true); })
+    .then(function(){ return code; });
+}
+function fbJoinGroup(code){
+  code=(code||'').toUpperCase().trim();
+  var uid=fbUid(); if(!uid) return Promise.reject(new Error('Bitte zuerst anmelden'));
+  if(!code) return Promise.reject(new Error('Bitte einen Code eingeben'));
+  var ref=fbDB().ref('groups/'+code);
+  return ref.once('value').then(function(snap){
+    var g=snap.val(); if(!g) throw new Error('Gruppe '+code+' nicht gefunden');
+    if(g.members && g.members[uid]) return code;
+    var sb=(typeof g.startBalance==='number')?g.startBalance:1000;
+    return ref.child('members/'+uid).set({ name:fbUserName(), balance:sb, joinedAt:new Date().toISOString() })
+      .then(function(){ return fbDB().ref('users/'+uid+'/groups/'+code).set(true); })
+      .then(function(){ return code; });
+  });
+}
+function fbLoadMyGroups(){
+  var uid=fbUid(); if(!uid) return Promise.resolve([]);
+  return fbDB().ref('users/'+uid+'/groups').once('value').then(function(snap){
+    var codes=snap.val()||{}; var keys=Object.keys(codes);
+    return Promise.all(keys.map(function(code){
+      return fbDB().ref('groups/'+code).once('value').then(function(s){ var g=s.val(); if(!g) return null; g._code=code; return g; });
+    })).then(function(arr){ return arr.filter(Boolean); });
+  });
+}
+function fbLoadGroup(code){ return fbDB().ref('groups/'+code).once('value').then(function(s){ var g=s.val(); if(g) g._code=code; return g; }); }
+
+function selectedGroupIcon(){ var b=document.querySelector('#emojiPick button.active'); return b?b.textContent.trim():'⚽'; }
+
+function renderGroups(){
+  var box=document.getElementById('grpRows'); if(!box) return;
+  if(!fbUid()){ box.innerHTML='<div class="empty">Bitte anmelden, um Gruppen zu sehen.</div>'; return; }
+  box.innerHTML='<div class="empty">Lädt Gruppen …</div>';
+  fbLoadMyGroups().then(function(gs){
+    MY_GROUPS=gs;
+    if(!gs.length){ box.innerHTML='<div class="empty">Noch keine Gruppen. Erstelle eine oder tritt mit einem Code bei.</div>'; return; }
+    box.innerHTML=gs.map(function(g){
+      var mc=g.members?Object.keys(g.members).length:0;
+      var lg=g.league==='wm2026'?'WM 2026':'Bundesliga';
+      return '<div class="grp" onclick="openGroup(\''+g._code+'\')"><div class="grp-ic">'+(g.icon||'⚽')+'</div>'
+        +'<div class="grp-m"><div class="n">'+esc(g.name)+'</div><div class="s">'+mc+' Mitglieder · '+lg+'</div></div>'
+        +'<div class="grp-r"><span class="ch"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div></div>';
+    }).join('');
+  }).catch(function(){ box.innerHTML='<div class="empty">Gruppen konnten nicht geladen werden. Ist die Datenbank online & angemeldet?</div>'; });
+}
+function fbDoCreate(){
+  var name=(document.getElementById('cgName').value||'').trim();
+  var league=(document.getElementById('cgLeague')||{}).value||'bl1';
+  var bal=parseInt((document.getElementById('cgBal')||{}).value,10); if(isNaN(bal)||bal<0) bal=1000;
+  if(!name){ toast('Bitte einen Gruppennamen eingeben'); return; }
+  toast('Gruppe wird erstellt …');
+  fbCreateGroup(name, league, bal, selectedGroupIcon()).then(function(code){
+    toast('Gruppe erstellt – Code '+code);
+    document.getElementById('cgName').value='';
+    var cf=document.getElementById('createForm'); if(cf) cf.style.display='none';
+    return fbLoadMyGroups();
+  }).then(function(gs){ if(gs){ MY_GROUPS=gs; renderGroups(); } }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'unbekannt')); });
+}
+function fbDoJoin(){
+  var code=(document.getElementById('joinCode').value||'').trim();
+  if(!code){ toast('Bitte einen Code eingeben'); return; }
+  toast('Trete Gruppe bei …');
+  fbJoinGroup(code).then(function(c){
+    toast('Beigetreten!'); document.getElementById('joinCode').value='';
+    return fbLoadMyGroups().then(function(gs){ MY_GROUPS=gs; renderGroups(); openGroup(c); });
+  }).catch(function(e){ toast((e&&e.message)||'Beitritt fehlgeschlagen'); });
+}
+function openGroup(code){
+  document.getElementById('grpList').style.display='none';
+  document.getElementById('grpDetail').style.display='block';
+  scheineFilter='alle';
+  var sf=document.querySelectorAll('#scheineFilter button'); sf.forEach(function(b,i){ b.classList.toggle('active',i===0); });
+  var seg=document.querySelectorAll('#gdSeg button'); seg.forEach(function(b,i){ b.classList.toggle('active',i===0); });
+  ['gdSpiele','gdScheine','gdKonk','gdTabelle'].forEach(function(id,i){ var el=document.getElementById(id); if(el) el.style.display=i===0?'':'none'; });
+  var ap=document.getElementById('adminPanel'); if(ap) ap.style.display='none';
+  slip=[]; slipOpen=false; renderSlip();
+  document.getElementById('main').scrollTop=0;
+  var g=MY_GROUPS.find(function(x){ return x._code===code; });
+  if(g){ fillGroupDetail(g); }
+  else { fbLoadGroup(code).then(function(gg){ if(gg){ MY_GROUPS.push(gg); fillGroupDetail(gg); } else { toast('Gruppe nicht gefunden'); closeGroup(); } }).catch(function(){ toast('Gruppe konnte nicht geladen werden'); closeGroup(); }); }
+}
+function fillGroupDetail(g){
+  var uid=fbUid();
+  var members=g.members||{};
+  CUR_MEMBERS=Object.keys(members).map(function(k){ return { uid:k, name:(members[k]&&members[k].name)||'?', balance:(members[k]&&members[k].balance)||0 }; });
+  CUR_MEMBERS.sort(function(a,b){ return b.balance-a.balance; });
+  CUR_GROUP=g;
+  var myIdx=-1; for(var i=0;i<CUR_MEMBERS.length;i++){ if(CUR_MEMBERS[i].uid===uid){ myIdx=i; break; } }
+  document.getElementById('gdIc').textContent=g.icon||'⚽';
+  document.getElementById('gdName').textContent=g.name||'Gruppe';
+  document.getElementById('gdSub').textContent=CUR_MEMBERS.length+' Mitglieder · '+(g.league==='wm2026'?'WM 2026':'Bundesliga');
+  document.getElementById('gdBal').textContent=fmt(myIdx>=0?CUR_MEMBERS[myIdx].balance:0)+' Münzen';
+  document.getElementById('gdRank').textContent=(myIdx>=0?(myIdx+1):'-')+'.';
+  var at=document.getElementById('adminToggleBtn'); if(at) at.style.display=(g.ownerUid===uid)?'':'none';
+  gSelMD=CURRENT_MD; var gm=document.getElementById('gMdNum'); if(gm) gm.textContent=CURRENT_MD+'. Spieltag';
+  renderGdTable(); renderMeScheine(); renderKonk(); renderAdminMembers();
+}
+function renderGdTable(){
+  var box=document.getElementById('gdTblRows'); if(!box) return;
+  var uid=fbUid();
+  box.innerHTML=CUR_MEMBERS.map(function(m,i){ var me=m.uid===uid;
+    return '<div class="lb-row"><div class="lb-rk '+(i<3?'top':'')+'">'+(i+1)+'</div><div class="lb-av">'+esc((m.name||'?').charAt(0))+'</div><div class="lb-m"><div class="n" style="'+(me?'color:var(--navy)':'')+'">'+esc(m.name)+(me?' (du)':'')+'</div></div><div class="lb-b" style="color:var(--ink)">'+fmt(m.balance)+' Münzen</div></div>';
+  }).join('') || '<div class="empty">Keine Mitglieder.</div>';
+}
+function renderAdminMembers(){
+  var box=document.getElementById('adminMembers'); if(!box) return;
+  var uid=fbUid();
+  box.innerHTML=CUR_MEMBERS.map(function(m){ var me=m.uid===uid;
+    return '<div class="mem-row"><div class="mem-av">'+esc((m.name||'?').charAt(0))+'</div><div class="mem-n">'+esc(m.name)+(me?'<span class="you">du</span>':'')+'<div class="mem-b">'+fmt(m.balance)+' Münzen</div></div><div class="mem-act">'+(me?'':'<button class="kick" onclick="fbKick(\''+m.uid+'\')" title="Entfernen">✕</button>')+'</div></div>';
+  }).join('') || '<div class="empty">Keine Mitglieder.</div>';
+}
+function fbKick(memUid){
+  if(!CUR_GROUP) return; var code=CUR_GROUP._code;
+  fbDB().ref('groups/'+code+'/members/'+memUid).remove()
+    .then(function(){ return fbDB().ref('users/'+memUid+'/groups/'+code).remove(); })
+    .then(function(){ toast('Mitglied entfernt'); return fbLoadGroup(code); })
+    .then(function(g){ if(g){ var idx=MY_GROUPS.findIndex(function(x){return x._code===code;}); if(idx>=0) MY_GROUPS[idx]=g; fillGroupDetail(g); } })
+    .catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
+}
+/* nach Login Gruppen laden */
+try{ firebase.auth().onAuthStateChanged(function(u){ if(u){ renderGroups(); } }); }catch(e){}
+</script>
+<script>
+/* ===== Match-Analyse (Port aus Kickanalyse) für Bundesliga-Begegnungen ===== */
+var BL_STATS=null, BL_SEASON=null, BL_HIST=null;
+function ensureBLData(){
+  var s=olSeason(); var jobs=[];
+  if(!BL_STATS){ jobs.push(apiFetch('/getbltable/bl1/'+s).then(function(tab){ BL_STATS={}; (tab||[]).forEach(function(r,i){ BL_STATS[r.teamName]={matches:r.matches||0,points:r.points||0,goals:r.goals||0,opponentGoals:r.opponentGoals||0,rank:i+1}; }); }).catch(function(){ if(!BL_STATS)BL_STATS={}; })); }
+  if(!BL_SEASON){ jobs.push(apiFetch('/getmatchdata/bl1/'+s).then(function(ms){ BL_SEASON=ms||[]; }).catch(function(){ if(!BL_SEASON)BL_SEASON=[]; })); }
+  if(!BL_HIST){ jobs.push(Promise.all([apiFetch('/getmatchdata/bl1/'+(s-1)).catch(function(){return[];}),apiFetch('/getmatchdata/bl1/'+(s-2)).catch(function(){return[];})]).then(function(r){ BL_HIST=[].concat(r[0]||[],r[1]||[]); }).catch(function(){ if(!BL_HIST)BL_HIST=[]; })); }
+  return Promise.all(jobs);
+}
+function teamStat(n){ return (BL_STATS&&BL_STATS[n])||null; }
+function teamRank(n){ var s=teamStat(n); return s?s.rank:null; }
+function mScore(m){ var rs=m.matchResults||[]; var r=rs.find(function(x){return x.resultTypeID===2;})||rs[rs.length-1]; return r?{h:r.pointsTeam1,a:r.pointsTeam2}:null; }
+function teamForm(n){
+  if(!BL_SEASON) return [];
+  return BL_SEASON.filter(function(m){ return m.matchIsFinished && ((m.team1&&m.team1.teamName===n)||(m.team2&&m.team2.teamName===n)); })
+   .sort(function(a,b){ return (b.matchDateTime||'').localeCompare(a.matchDateTime||''); }).slice(0,5)
+   .map(function(m){ var s=mScore(m); if(!s) return '?'; var home=m.team1.teamName===n; var gf=home?s.h:s.a, ga=home?s.a:s.h; return gf>ga?'S':gf<ga?'N':'U'; });
+}
+function teamH2H(h,a){
+  var all=[].concat(BL_SEASON||[],BL_HIST||[]);
+  return all.filter(function(m){ if(!m.matchIsFinished||!m.team1||!m.team2) return false; var t1=m.team1.teamName,t2=m.team2.teamName; return (t1===h&&t2===a)||(t1===a&&t2===h); })
+   .sort(function(x,y){ return (y.matchDateTime||'').localeCompare(x.matchDateTime||''); }).slice(0,6)
+   .map(function(m){ var s=mScore(m); return { home:m.team1.teamName, away:m.team2.teamName, hs:s?s.h:'-', as:s?s.a:'-' }; });
+}
+function calcProbs(h,a){
+  var hs=teamStat(h), as=teamStat(a), wH,wD,wA,xH,xA,src;
+  if(hs&&as){
+    var hPpg=hs.matches?hs.points/hs.matches:1.5, aPpg=as.matches?as.points/as.matches:1.5;
+    var hGpg=hs.matches?hs.goals/hs.matches:1.4, aGpg=as.matches?as.goals/as.matches:1.4;
+    var hCpg=hs.matches?hs.opponentGoals/hs.matches:1.3, aCpg=as.matches?as.opponentGoals/as.matches:1.3;
+    xH=Math.min(2.2,(hGpg*.6+aCpg*.4)*1.0).toFixed(1);
+    xA=Math.min(1.8,(aGpg*.6+hCpg*.4)*.80).toFixed(1);
+    var hStr=hPpg*.7+(hGpg-hCpg)*.3+.1, aStr=aPpg*.7+(aGpg-aCpg)*.3;
+    var tot=Math.abs(hStr)+Math.abs(aStr)+.8;
+    wH=Math.round(Math.min(75,Math.max(20,hStr/tot*85+5)));
+    wA=Math.round(Math.min(70,Math.max(12,aStr/tot*75)));
+    wD=100-wH-wA;
+    if(wD<10){wD=10;var t1=wH+wA;wH=Math.round(wH/t1*90);wA=90-wH;}
+    if(wD>38){wD=38;var t2=wH+wA;wH=Math.round(wH/t2*62);wA=62-wH;}
+    src='Tabelle';
+  } else {
+    var seed=hashStr(h+a); var r1=(seed%1000)/1000, r2=((seed>>>10)%1000)/1000;
+    wH=Math.round(38+r1*24); wA=Math.round(16+r2*22); wD=100-wH-wA;
+    if(wD<12){wD=12;var t3=wH+wA;wH=Math.round(wH/t3*88);wA=88-wH;}
+    if(wD>35){wD=35;var t4=wH+wA;wH=Math.round(wH/t4*65);wA=65-wH;}
+    xH=(0.9+r1*1.1).toFixed(1); xA=(0.6+r2*0.9).toFixed(1); src='Modell';
+  }
+  var conf=(wH>54||wA>48)?'high':(wH>44||wA>40)?'med':'low';
+  return {wH:wH,wD:wD,wA:wA,conf:conf,xH:String(xH),xA:String(xA),src:src};
+}
+function calcOdds(prob){ var pp=Math.max(8,Math.min(94,prob)); return Math.max(1.05,Math.round((1/(pp/100*1.07))*20)/20); }
+function confLabel(c){ return c==='high'?'Hoch':c==='med'?'Mittel':'Niedrig'; }
+function hashStr(s){ var h=0; for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))>>>0; } return h; }
+function olDateTime(iso){ var d=new Date(iso); if(isNaN(d)) return ''; var wd=['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()]; var mon=['Jan.','Feb.','März','Apr.','Mai','Juni','Juli','Aug.','Sep.','Okt.','Nov.','Dez.'][d.getMonth()]; function pz(x){return String(x).padStart(2,'0');} return wd+', '+d.getDate()+'. '+mon+' · '+pz(d.getHours())+':'+pz(d.getMinutes())+' Uhr'; }
+function kiPrognose(pp,h,a){
+  var diff=Math.abs(pp.wH-pp.wA), fav=pp.wH>=pp.wA?h:a, lead=Math.max(pp.wH,pp.wA), hj=pp.wH>=pp.wA;
+  var intro=diff<=8?'Ausgeglichenes Duell.':diff<=18?'Leichter Favorit.':'Klarer Favorit.';
+  var side=hj?'Heimvorteil':'Auswärtsstärke';
+  return intro+' '+fav+' mit '+(diff<=8?'knappem ':'')+side+' ('+lead+'%). Unentschieden ('+pp.wD+'%) '+(pp.wD>=30?'gut möglich':'möglich')+'.';
+}
+function probBar(pp){ return '<div class="prob-bar"><span style="width:'+pp.wH+'%;background:var(--win)"></span><span style="width:'+pp.wD+'%;background:var(--draw)"></span><span style="width:'+pp.wA+'%;background:var(--loss)"></span></div>'; }
+function fBadges(f){ var h='<div class="fmb">'; for(var i=0;i<5;i++){ var x=f[i]||'?'; var c=x==='S'?'w':x==='N'?'l':x==='U'?'d':'x'; h+='<span class="fb '+c+'">'+(x==='?'?'':x)+'</span>'; } return h+'</div>'; }
+function matchDetailHTML(match,pp){
+  var h=match.team1.teamName, a=match.team2.teamName;
+  var hs=teamStat(h), as=teamStat(a);
+  var fH=teamForm(h), fA=teamForm(a), h2h=teamH2H(h,a);
+  var html='';
+  html+='<div class="det-sec">Siegwahrscheinlichkeit</div>';
+  html+='<div class="pr"><span class="pr-l">'+esc(h)+'</span><div class="pr-bar"><i style="width:'+pp.wH+'%;background:var(--win)"></i></div><span class="pr-v">'+pp.wH+'%</span></div>';
+  html+='<div class="pr"><span class="pr-l">Unentschieden</span><div class="pr-bar"><i style="width:'+pp.wD+'%;background:var(--draw)"></i></div><span class="pr-v">'+pp.wD+'%</span></div>';
+  html+='<div class="pr"><span class="pr-l">'+esc(a)+'</span><div class="pr-bar"><i style="width:'+pp.wA+'%;background:var(--loss)"></i></div><span class="pr-v">'+pp.wA+'%</span></div>';
+  html+='<div class="det-sec">Expected Goals (xG)</div>';
+  html+='<div class="pr"><span class="pr-l">'+esc(h)+'</span><div class="pr-bar"><i style="width:'+Math.min(100,pp.xH/2.5*100)+'%;background:#3b82f6"></i></div><span class="pr-v">'+pp.xH+'</span></div>';
+  html+='<div class="pr"><span class="pr-l">'+esc(a)+'</span><div class="pr-bar"><i style="width:'+Math.min(100,pp.xA/2.5*100)+'%;background:#3b82f6"></i></div><span class="pr-v">'+pp.xA+'</span></div>';
+  if(hs||as){ html+='<div class="det-sec">Bundesliga-Tabelle</div>';
+    if(hs) html+='<div class="tl"><span>'+esc(h)+'</span><b>#'+hs.rank+' · '+hs.points+' Pkt · '+hs.goals+':'+hs.opponentGoals+'</b></div>';
+    if(as) html+='<div class="tl"><span>'+esc(a)+'</span><b>#'+as.rank+' · '+as.points+' Pkt · '+as.goals+':'+as.opponentGoals+'</b></div>'; }
+  html+='<div class="det-sec">Form – letzte 5</div>';
+  html+='<div class="tl"><span>'+esc(h)+'</span>'+fBadges(fH)+'</div>';
+  html+='<div class="tl"><span>'+esc(a)+'</span>'+fBadges(fA)+'</div>';
+  html+='<div class="det-sec">H2H – letzte Begegnungen</div>';
+  if(h2h.length){ h2h.forEach(function(x){ var res=x.hs>x.as?(x.home+' siegt'):(x.hs<x.as?(x.away+' siegt'):'Unentschieden'); html+='<div class="tl h2h"><span>'+esc(res)+'</span><b>'+x.hs+':'+x.as+'</b></div>'; }); }
+  else html+='<div class="tl">Keine früheren Begegnungen gefunden.</div>';
+  html+='<div class="det-ki"><b>🤖 KI-Prognose</b><br>'+esc(kiPrognose(pp,h,a))+'</div>';
+  return html;
+}
+function matchCardFull(match){
+  var h=(match.team1&&match.team1.teamName)||'?', a=(match.team2&&match.team2.teamName)||'?';
+  var ha=crestHTML(h), aa=crestHTML(a);
+  var fin=match.matchIsFinished, sc=fin?olScore(match):null;
+  var when=olDateTime(match.matchDateTime);
+  var pp=calcProbs(h,a);
+  var mid='mx'+(match.matchID||hashStr(h+a+(match.matchDateTime||'')));
+  var mid2= fin ? '<div class="res-score">'+(sc?sc.hs:'-')+' : '+(sc?sc.as:'-')+'</div>' : '<div class="match-vs">:</div>';
+  var html='<div class="match mx">';
+  html+='<div class="mx-head" onclick="toggleMatchDetail(\''+mid+'\')">';
+  html+='<div class="match-top"><span>'+(when||'—')+'</span>'+(fin?'<span class="tag" style="background:#eef0f4;color:var(--ink-2)">Beendet</span>':'')+'</div>';
+  html+='<div class="match-main"><div class="tm"><div class="crest">'+ha+'</div><div class="tm-name">'+esc(h)+'</div></div>'+mid2+'<div class="tm away"><div class="crest">'+aa+'</div><div class="tm-name">'+esc(a)+'</div></div></div>';
+  html+=probBar(pp);
+  html+='<div class="prob-lbl"><span style="color:var(--win)">'+olAbbr(h)+' '+pp.wH+'%</span><span style="color:var(--draw)">Unent. '+pp.wD+'%</span><span style="color:var(--loss)">'+olAbbr(a)+' '+pp.wA+'%</span></div>';
+  html+='<div class="mx-chips"><span class="chip conf-'+pp.conf+'">Konfidenz: '+confLabel(pp.conf)+'</span><span class="chip">xG '+pp.xH+'–'+pp.xA+'</span><span class="chip mx-more">Details ▾</span></div>';
+  html+='</div><div class="mx-det" id="det-'+mid+'" style="display:none">'+matchDetailHTML(match,pp)+'</div></div>';
+  return html;
+}
+function toggleMatchDetail(mid){ var d=document.getElementById('det-'+mid); if(!d) return; var open=d.style.display!=='none'; d.style.display=open?'none':'block'; var card=d.parentNode; var more=card&&card.querySelector('.mx-more'); if(more) more.textContent=open?'Details ▾':'Weniger ▴'; }
+/* Begegnungen mit Analyse rendern */
+function loadMatchupMatches(){
+  if(activeLeague==='wm2026'){ loadWMMatchup(); return; }
+  var box=document.getElementById('muMatchList'), lbl=document.getElementById('muMdLabel');
+  if(activeLeague!=='bl1'){
+    if(mSelMD<CURRENT_MD){ lbl.textContent='Spieltag '+mSelMD+' · Ergebnisse'; box.innerHTML=RESULTS.map(resultCard).join(''); }
+    else { lbl.textContent='Spieltag '+mSelMD+' · Begegnungen'; box.innerHTML=MATCHES.map(function(m){return fixtureCard(m,false);}).join(''); }
+    return;
+  }
+  lbl.textContent='Spieltag '+mSelMD+' · Saison '+olSeasonLabel();
+  var mn=document.getElementById('mMdNum'); if(mn) mn.textContent=mSelMD+'. Spieltag · '+olSeasonLabel();
+  box.innerHTML='<div class="empty">Lädt Spieldaten & Analyse …</div>';
+  Promise.all([apiFetch('/getmatchdata/bl1/'+olSeason()+'/'+mSelMD).catch(function(){return null;}), ensureBLData()]).then(function(r){
+    var data=r[0];
+    if(!Array.isArray(data)||!data.length){ box.innerHTML='<div class="empty">Keine Spiele für diesen Spieltag.</div>'; return; }
+    box.innerHTML=data.map(matchCardFull).join('');
+  }).catch(function(){ box.innerHTML='<div class="empty">Spieldaten konnten nicht geladen werden. Bitte später erneut.</div>'; });
+}
+(function(){var s=document.createElement('style');s.textContent=
+ '.mx-head{cursor:pointer}'
+ +'.prob-bar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin:11px 0 6px;background:#eef0f4}'
+ +'.prob-bar span{display:block;height:100%}'
+ +'.prob-lbl{display:flex;justify-content:space-between;font-size:11px;font-weight:800;margin-bottom:9px}'
+ +'.mx-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}'
+ +'.chip{font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;background:#eef0f4;color:var(--ink-2)}'
+ +'.chip.conf-high{background:#d8f5e3;color:#0c7a37}.chip.conf-med{background:#fef3c7;color:#92600a}.chip.conf-low{background:#fde2e2;color:#b42318}'
+ +'.mx-more{margin-left:auto;color:var(--navy);cursor:pointer}'
+ +'.mx-det{border-top:1px solid var(--line);margin-top:12px;padding-top:4px}'
+ +'.det-sec{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3);margin:14px 0 7px}'
+ +'.pr{display:flex;align-items:center;gap:9px;margin:6px 0;font-size:12px}'
+ +'.pr-l{flex:0 0 92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}'
+ +'.pr-bar{flex:1;height:7px;border-radius:99px;background:#eef0f4;overflow:hidden}'
+ +'.pr-bar i{display:block;height:100%;border-radius:99px}'
+ +'.pr-v{flex:0 0 42px;text-align:right;font-weight:800;color:var(--ink)}'
+ +'.tl{font-size:12px;color:var(--ink-2);margin:6px 0;display:flex;align-items:center;gap:8px;justify-content:space-between}'
+ +'.tl>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+ +'.tl b{color:var(--ink);white-space:nowrap}'
+ +'.fmb{display:inline-flex;gap:3px;flex-shrink:0}'
+ +'.fb{width:17px;height:17px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff}'
+ +'.fb.w{background:var(--win)}.fb.d{background:var(--draw)}.fb.l{background:var(--loss)}.fb.x{background:#cbd2de}'
+ +'.det-ki{margin-top:14px;padding:11px 13px;background:#f0f6ff;border:1px solid #dbe8ff;border-radius:11px;font-size:12px;color:var(--ink-2);line-height:1.65}';
+ document.head.appendChild(s);})();
 </script>
 </body>
 </html>
