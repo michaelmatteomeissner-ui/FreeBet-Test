@@ -483,7 +483,7 @@ fbAuth.onAuthStateChanged(function(user){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 8</div>
+        <div class="hdr-sub2">Tippspiel · Build 9</div>
       </div>
     </div>
   </header>
@@ -1202,7 +1202,7 @@ function proxyFetch(base){
   }
   return tryNext();
 }
-function olSeason(){ var d = new Date(); var y = d.getFullYear(); return (d.getMonth()+1 >= 7) ? y : y-1; }
+function olSeason(){ var d = new Date(); var y = d.getFullYear(); return (d.getMonth()+1 >= 8) ? y : y-1; }
 function olSeasonLabel(){ var s=olSeason(); return String(s).slice(2)+'/'+String(s+1).slice(2); }
 function olAbbr(name){
   if(!name) return '?';
@@ -1274,11 +1274,12 @@ function renderMatchupFix(){
   else { if(pick) pick.style.display=''; loadMatchupMatches(); }
 }
 function renderTable(){ loadTable(); }
+var BL_CUR_MD=null;
 function olInitCurrentMatchday(){
   apiFetch('/getcurrentgroup/bl1').then(function(g){
     var md = g && g.groupOrderID ? g.groupOrderID : null;
     if (md){
-      mSelMD = Math.max(1, Math.min(34, md));
+      mSelMD = Math.max(1, Math.min(34, md)); BL_CUR_MD = mSelMD;
       var el = document.getElementById('mMdNum'); if (el) el.textContent = mSelMD + '. Spieltag';
       if (activeLeague === 'bl1') loadMatchupMatches();
     }
@@ -1380,7 +1381,7 @@ function renderMdGrid(sel){
     return;
   }
   grid.removeAttribute('style');
-  var hh=''; for(var i=1;i<=34;i++){ var cls=i===sel?'sel':(i<CURRENT_MD?'done':(i>CURRENT_MD?'future':'')); hh+='<div class="md-cell '+cls+'" onclick="chooseMd('+i+')">'+i+(i===CURRENT_MD?'<small>jetzt</small>':'')+'</div>'; }
+  var cur=BL_CUR_MD||CURRENT_MD; var hh=''; for(var i=1;i<=34;i++){ var cls=i===sel?'sel':(i<cur?'done':(i>cur?'future':'')); hh+='<div class="md-cell '+cls+'" onclick="chooseMd('+i+')">'+i+(i===cur?'<small>jetzt</small>':'')+'</div>'; }
   grid.innerHTML=hh;
 }
 function chooseWmRound(idx){ var keys=WM_ROUND_KEYS.length?WM_ROUND_KEYS:(WM_CACHE?wmOrderedRounds(WM_CACHE):[]); wmSelRound=keys[idx]; renderWMRound(); closeMdPicker(); }
@@ -1560,13 +1561,20 @@ try{ firebase.auth().onAuthStateChanged(function(u){ if(u){ renderGroups(); } })
 </script>
 <script>
 /* ===== Match-Analyse (Port aus Kickanalyse) für Bundesliga-Begegnungen ===== */
-var BL_STATS=null, BL_SEASON=null, BL_HIST=null;
+var BL_STATS=null, BL_SEASON=null, BL_HIST=null, BL_DATA_SEASON=null;
+function fetchBLTable(s){ return apiFetch('/getbltable/bl1/'+s).then(function(tab){ return (tab&&tab.length&&tab.reduce(function(x,r){return x+(r.matches||0);},0)>0)?{s:s,tab:tab}:null; }).catch(function(){return null;}); }
 function ensureBLData(){
-  var s=olSeason(); var jobs=[];
-  if(!BL_STATS){ jobs.push(apiFetch('/getbltable/bl1/'+s).then(function(tab){ BL_STATS={}; (tab||[]).forEach(function(r,i){ BL_STATS[r.teamName]={matches:r.matches||0,points:r.points||0,goals:r.goals||0,opponentGoals:r.opponentGoals||0,rank:i+1}; }); }).catch(function(){ if(!BL_STATS)BL_STATS={}; })); }
-  if(!BL_SEASON){ jobs.push(apiFetch('/getmatchdata/bl1/'+s).then(function(ms){ BL_SEASON=ms||[]; }).catch(function(){ if(!BL_SEASON)BL_SEASON=[]; })); }
-  if(!BL_HIST){ jobs.push(Promise.all([apiFetch('/getmatchdata/bl1/'+(s-1)).catch(function(){return[];}),apiFetch('/getmatchdata/bl1/'+(s-2)).catch(function(){return[];})]).then(function(r){ BL_HIST=[].concat(r[0]||[],r[1]||[]); }).catch(function(){ if(!BL_HIST)BL_HIST=[]; })); }
-  return Promise.all(jobs);
+  if(BL_STATS&&BL_SEASON&&BL_HIST) return Promise.resolve();
+  var s=olSeason();
+  var pick = (BL_DATA_SEASON!=null) ? Promise.resolve({s:BL_DATA_SEASON,tab:null})
+    : fetchBLTable(s).then(function(r){ return r||fetchBLTable(s-1); }).then(function(r){ return r||{s:s,tab:[]}; });
+  return pick.then(function(base){
+    var ds=base.s; BL_DATA_SEASON=ds; var jobs=[];
+    if(!BL_STATS){ var tp=base.tab?Promise.resolve(base.tab):apiFetch('/getbltable/bl1/'+ds).catch(function(){return [];}); jobs.push(tp.then(function(tab){ BL_STATS={}; (tab||[]).forEach(function(r,i){ BL_STATS[r.teamName]={matches:r.matches||0,points:r.points||0,goals:r.goals||0,opponentGoals:r.opponentGoals||0,rank:i+1}; }); })); }
+    if(!BL_SEASON){ jobs.push(apiFetch('/getmatchdata/bl1/'+ds).then(function(ms){ BL_SEASON=ms||[]; }).catch(function(){ BL_SEASON=[]; })); }
+    if(!BL_HIST){ jobs.push(Promise.all([apiFetch('/getmatchdata/bl1/'+(ds-1)).catch(function(){return[];}),apiFetch('/getmatchdata/bl1/'+(ds-2)).catch(function(){return[];})]).then(function(rr){ BL_HIST=[].concat(rr[0]||[],rr[1]||[]); }).catch(function(){ if(!BL_HIST)BL_HIST=[]; })); }
+    return Promise.all(jobs);
+  });
 }
 function teamStat(n){ return (BL_STATS&&BL_STATS[n])||null; }
 function teamRank(n){ var s=teamStat(n); return s?s.rank:null; }
@@ -1631,8 +1639,8 @@ function matchDetailHTML(match,pp){
   html+='<div class="pr"><span class="pr-l">Unentschieden</span><div class="pr-bar"><i style="width:'+pp.wD+'%;background:var(--draw)"></i></div><span class="pr-v">'+pp.wD+'%</span></div>';
   html+='<div class="pr"><span class="pr-l">'+esc(a)+'</span><div class="pr-bar"><i style="width:'+pp.wA+'%;background:var(--loss)"></i></div><span class="pr-v">'+pp.wA+'%</span></div>';
   html+='<div class="det-sec">Expected Goals (xG)</div>';
-  html+='<div class="pr"><span class="pr-l">'+esc(h)+'</span><div class="pr-bar"><i style="width:'+Math.min(100,pp.xH/2.5*100)+'%;background:#3b82f6"></i></div><span class="pr-v">'+pp.xH+'</span></div>';
-  html+='<div class="pr"><span class="pr-l">'+esc(a)+'</span><div class="pr-bar"><i style="width:'+Math.min(100,pp.xA/2.5*100)+'%;background:#3b82f6"></i></div><span class="pr-v">'+pp.xA+'</span></div>';
+  html+='<div class="pr"><span class="pr-l">'+esc(h)+'</span><div class="pr-bar"><i style="width:'+Math.min(100,pp.xH/2.5*100)+'%;background:#14336e"></i></div><span class="pr-v">'+pp.xH+'</span></div>';
+  html+='<div class="pr"><span class="pr-l">'+esc(a)+'</span><div class="pr-bar"><i style="width:'+Math.min(100,pp.xA/2.5*100)+'%;background:#14336e"></i></div><span class="pr-v">'+pp.xA+'</span></div>';
   if(hs||as){ html+='<div class="det-sec">Bundesliga-Tabelle</div>';
     if(hs) html+='<div class="tl"><span>'+esc(h)+'</span><b>#'+hs.rank+' · '+hs.points+' Pkt · '+hs.goals+':'+hs.opponentGoals+'</b></div>';
     if(as) html+='<div class="tl"><span>'+esc(a)+'</span><b>#'+as.rank+' · '+as.points+' Pkt · '+as.goals+':'+as.opponentGoals+'</b></div>'; }
@@ -1692,19 +1700,19 @@ function loadMatchupMatches(){
  +'.chip.conf-high{background:#d8f5e3;color:#0c7a37}.chip.conf-med{background:#fef3c7;color:#92600a}.chip.conf-low{background:#fde2e2;color:#b42318}'
  +'.mx-more{margin-left:auto;color:var(--navy);cursor:pointer}'
  +'.mx-det{border-top:1px solid var(--line);margin-top:12px;padding-top:4px}'
- +'.det-sec{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3);margin:14px 0 7px}'
- +'.pr{display:flex;align-items:center;gap:9px;margin:6px 0;font-size:12px}'
+ +'.det-sec{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3);margin:11px 0 5px}'
+ +'.pr{display:flex;align-items:center;gap:9px;margin:3px 0;font-size:12px}'
  +'.pr-l{flex:0 0 92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}'
  +'.pr-bar{flex:1;height:7px;border-radius:99px;background:#eef0f4;overflow:hidden}'
  +'.pr-bar i{display:block;height:100%;border-radius:99px}'
  +'.pr-v{flex:0 0 42px;text-align:right;font-weight:800;color:var(--ink)}'
- +'.tl{font-size:12px;color:var(--ink-2);margin:6px 0;display:flex;align-items:center;gap:8px;justify-content:space-between}'
+ +'.tl{font-size:12px;color:var(--ink-2);margin:3px 0;display:flex;align-items:center;gap:8px;justify-content:space-between}'
  +'.tl>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
  +'.tl b{color:var(--ink);white-space:nowrap}'
  +'.fmb{display:inline-flex;gap:3px;flex-shrink:0}'
  +'.fb{width:17px;height:17px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff}'
  +'.fb.w{background:var(--win)}.fb.d{background:var(--draw)}.fb.l{background:var(--loss)}.fb.x{background:#cbd2de}'
- +'.det-ki{margin-top:14px;padding:11px 13px;background:#f0f6ff;border:1px solid #dbe8ff;border-radius:11px;font-size:12px;color:var(--ink-2);line-height:1.65}';
+ +'.det-ki{margin-top:10px;padding:10px 12px;background:#f5f6f9;border:1px solid #e3e7ef;border-radius:11px;font-size:12px;color:var(--ink-2);line-height:1.6}';
  document.head.appendChild(s);})();
 </script>
 </body>
