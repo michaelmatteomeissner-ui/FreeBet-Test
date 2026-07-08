@@ -483,7 +483,7 @@ fbAuth.onAuthStateChanged(function(user){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 10</div>
+        <div class="hdr-sub2">Tippspiel · Build 11</div>
       </div>
     </div>
   </header>
@@ -1749,6 +1749,103 @@ function renderGroupSpiele(){
   if(lbl) lbl.textContent='Spieltag '+gSelMD+' · Saison '+olSeasonLabel();
   box.innerHTML='<div class="empty">Lädt Spiele & Analyse …</div>';
   Promise.all([apiFetch('/getmatchdata/bl1/'+olSeason()+'/'+gSelMD).catch(function(){return null;}), ensureBLData()]).then(function(r){ var data=r[0]; if(!Array.isArray(data)||!data.length){ box.innerHTML='<div class="empty">Keine Spiele für diesen Spieltag.</div>'; return; } box.innerHTML=data.map(matchCardFull).join(''); }).catch(function(){ box.innerHTML='<div class="empty">Spiele konnten nicht geladen werden. Bitte später erneut.</div>'; });
+}
+</script>
+<script>
+/* ===== B2.3: Wetten in Gruppen – Quoten-Karten + Firebase-Scheine ===== */
+function betCard(o){
+  var html='<div class="match mx">';
+  var clk=o.detailHTML?(' onclick="toggleMatchDetail(\''+o.mid+'\')"'):'';
+  html+='<div class="mx-head"'+clk+'>';
+  html+='<div class="match-top"><span>'+(o.when||'—')+'</span>'+(o.fin?'<span class="tag" style="background:#eef0f4;color:var(--ink-2)">Beendet</span>':'')+'</div>';
+  var mid2=o.fin?('<div class="res-score">'+(o.hs!=null?o.hs:'-')+' : '+(o.as!=null?o.as:'-')+'</div>'):'<div class="match-vs">:</div>';
+  html+='<div class="match-main"><div class="tm"><div class="crest">'+o.hCrest+'</div><div class="tm-name">'+esc(o.h)+'</div></div>'+mid2+'<div class="tm away"><div class="crest">'+o.aCrest+'</div><div class="tm-name">'+esc(o.a)+'</div></div></div>';
+  html+=probBar(o.pp);
+  html+='<div class="prob-lbl"><span style="color:var(--win)">'+olAbbr(o.h)+' '+o.pp.wH+'%</span><span style="color:var(--draw)">Unent. '+o.pp.wD+'%</span><span style="color:var(--loss)">'+olAbbr(o.a)+' '+o.pp.wA+'%</span></div>';
+  html+='<div class="mx-chips"><span class="chip conf-'+o.pp.conf+'">Konfidenz: '+confLabel(o.pp.conf)+'</span><span class="chip">xG '+o.pp.xH+'–'+o.pp.xA+'</span>'+(o.detailHTML?'<span class="chip mx-more">Details ▾</span>':'')+'</div>';
+  html+='</div>';
+  if(!o.fin){ var mm={id:o.mid,h:o.h,a:o.a}; html+='<div class="odds">'+oddBtn(mm,'1',calcOdds(o.pp.wH))+oddBtn(mm,'X',calcOdds(o.pp.wD))+oddBtn(mm,'2',calcOdds(o.pp.wA))+'</div>'; }
+  else { html+='<div class="locked"><span class="ic">🔒</span> Spiel beendet – keine Wette möglich</div>'; }
+  if(o.detailHTML){ html+='<div class="mx-det" id="det-'+o.mid+'" style="display:none">'+o.detailHTML+'</div>'; }
+  html+='</div>'; return html;
+}
+function groupMatchCard(match){
+  var h=match.team1.teamName, a=match.team2.teamName, pp=calcProbs(h,a), sc=match.matchIsFinished?olScore(match):null;
+  return betCard({ mid:'g'+(match.matchID||hashStr(h+a+(match.matchDateTime||''))), when:olDateTime(match.matchDateTime), fin:match.matchIsFinished, hs:sc?sc.hs:null, as:sc?sc.as:null, hCrest:crestHTML(h), aCrest:crestHTML(a), h:h, a:a, pp:pp, detailHTML:matchDetailHTML(match,pp) });
+}
+function groupWmCard(match){
+  var h=match.team1, a=match.team2, pp=calcProbs(h,a);
+  var fin=!!(match.score&&match.score.ft), hs=fin?match.score.ft[0]:null, as=fin?match.score.ft[1]:null;
+  var when=match.date?(wmDate(match.date)+(match.time?(' · '+String(match.time).replace(/\s*UTC.*/i,'').trim()+' Uhr'):'')):'';
+  return betCard({ mid:'g'+hashStr(h+a+(match.date||'')), when:when, fin:fin, hs:hs, as:as, hCrest:wmCrest(h), aCrest:wmCrest(a), h:wmName(h), a:wmName(a), pp:pp, detailHTML:'' });
+}
+function renderGroupSpiele(){
+  var box=document.getElementById('matchList'); if(!box) return;
+  var lbl=document.getElementById('gdMdLabel'), mn=document.getElementById('gMdNum');
+  var lg=grpLeague();
+  if(lg==='wm2026'){
+    box.innerHTML='<div class="empty">Lädt WM-Spiele …</div>';
+    var render=function(){ if(!WM_CACHE||!WM_CACHE.length){ box.innerHTML='<div class="empty">Keine WM-Daten verfügbar.</div>'; return; } if(!wmSelRound) wmSelRound=wmCurrentRound(WM_CACHE); if(mn) mn.textContent=wmRoundLabelDe(wmSelRound); if(lbl) lbl.textContent='WM 2026 · '+wmRoundLabelDe(wmSelRound); var list=WM_CACHE.filter(function(m){return (m.round||'?')===wmSelRound;}).sort(function(a,b){return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''));}); box.innerHTML=list.length?list.map(groupWmCard).join(''):'<div class="empty">Keine Spiele in dieser Runde.</div>'; syncOddStates(); };
+    if(WM_CACHE){ if(!WM_ROUND_KEYS.length) WM_ROUND_KEYS=wmOrderedRounds(WM_CACHE); render(); }
+    else { proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; WM_CACHE=ms; WM_ROUND_KEYS=wmOrderedRounds(ms); render(); }).catch(function(){ box.innerHTML='<div class="empty">WM-Spiele konnten nicht geladen werden. Bitte später erneut.</div>'; }); }
+    return;
+  }
+  if(mn) mn.textContent=gSelMD+'. Spieltag';
+  if(lbl) lbl.textContent='Spieltag '+gSelMD+' · Saison '+olSeasonLabel();
+  box.innerHTML='<div class="empty">Lädt Spiele & Analyse …</div>';
+  Promise.all([apiFetch('/getmatchdata/bl1/'+olSeason()+'/'+gSelMD).catch(function(){return null;}), ensureBLData()]).then(function(r){ var data=r[0]; if(!Array.isArray(data)||!data.length){ box.innerHTML='<div class="empty">Keine Spiele für diesen Spieltag.</div>'; return; } box.innerHTML=data.map(groupMatchCard).join(''); syncOddStates(); }).catch(function(){ box.innerHTML='<div class="empty">Spiele konnten nicht geladen werden. Bitte später erneut.</div>'; });
+}
+function submitSlip(){
+  if(!CUR_GROUP){ toast('Erst eine Gruppe öffnen'); return; }
+  if(!slip.length){ toast('Kein Tipp gewählt'); return; }
+  var stake=parseFloat(document.getElementById('stakeIn').value)||0;
+  if(stake<=0){ toast('Einsatz eingeben'); return; }
+  var uid=fbUid(), code=CUR_GROUP._code||CUR_GROUP.code;
+  var me=(CUR_GROUP.members&&CUR_GROUP.members[uid])||{balance:0};
+  if(stake>(me.balance||0)){ toast('Nicht genug Guthaben'); return; }
+  var slipId='s'+Date.now(), tot=totalOdds();
+  var rec={ id:slipId, uid:uid, name:fbUserName(), picks:slip.map(function(s){return {id:s.id,mLabel:s.mLabel,pick:s.pick,q:s.q};}), stake:stake, odds:tot, potential:Math.round(stake*tot), ts:Date.now(), status:'offen' };
+  var newBal=(me.balance||0)-stake;
+  toast('Speichere …');
+  Promise.all([ fbDB().ref('groups/'+code+'/slips/'+uid+'/'+slipId).set(rec), fbDB().ref('groups/'+code+'/members/'+uid+'/balance').set(newBal) ]).then(function(){
+    if(CUR_GROUP.members&&CUR_GROUP.members[uid]) CUR_GROUP.members[uid].balance=newBal;
+    for(var i=0;i<CUR_MEMBERS.length;i++){ if(CUR_MEMBERS[i].uid===uid) CUR_MEMBERS[i].balance=newBal; }
+    CUR_MEMBERS.sort(function(a,b){return b.balance-a.balance;});
+    var gb=document.getElementById('gdBal'); if(gb) gb.textContent=fmt(newBal)+' Münzen';
+    slip=[]; slipOpen=false; syncOddStates(); renderSlip();
+    if(typeof renderGdTable==='function') renderGdTable();
+    renderMeScheine();
+    toast('✅ Schein gespeichert · '+fmt(stake)+' Einsatz');
+  }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'unbekannt')); });
+}
+function scheinTag(st){ return st==='gewonnen'?'<span class="tag" style="background:#d8f5e3;color:#0c7a37">Gewonnen</span>':st==='verloren'?'<span class="tag" style="background:#fde2e2;color:#b42318">Verloren</span>':'<span class="tag">Offen</span>'; }
+function scheinCard(s,who){
+  var picks=(s.picks||[]).map(function(pp){ return '<div class="slip-pick"><div class="info"><div class="mt">'+esc(pp.mLabel)+'</div><div class="pk">'+tipName(pp.pick)+'</div></div><div class="q">'+Number(pp.q).toFixed(2)+'</div></div>'; }).join('');
+  var head='<b>'+((s.picks&&s.picks.length>1)?(s.picks.length+'er Kombi'):'Einzelwette')+'</b>';
+  if(who) head='<b>'+esc(who)+'</b> · '+((s.picks&&s.picks.length>1)?(s.picks.length+'er Kombi'):'Einzel');
+  return '<div class="card" style="padding:12px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+head+scheinTag(s.status)+'</div>'+picks+'<div style="display:flex;justify-content:space-between;margin-top:9px;font-size:12.5px;color:var(--ink-2)"><span>Einsatz <b style="color:var(--ink)">'+fmt(s.stake)+'</b></span><span>Quote <b style="color:var(--ink)">'+Number(s.odds).toFixed(2)+'</b></span><span>Mögl. <b style="color:var(--ink)">'+fmt(s.potential)+'</b></span></div></div>';
+}
+function renderMeScheine(){
+  var box=document.getElementById('meScheineList'); if(!box) return;
+  if(!CUR_GROUP){ box.innerHTML=''; return; }
+  var code=CUR_GROUP._code||CUR_GROUP.code, uid=fbUid();
+  box.innerHTML='<div class="empty">Lädt Scheine …</div>';
+  fbDB().ref('groups/'+code+'/slips/'+uid).once('value').then(function(s){
+    var data=s.val()||{}; var arr=Object.keys(data).map(function(k){return data[k];}).sort(function(a,b){return (b.ts||0)-(a.ts||0);});
+    arr=arr.filter(function(x){ return scheineFilter==='alle'?true:scheineFilter==='offen'?(x.status==='offen'):(x.status&&x.status!=='offen'); });
+    box.innerHTML=arr.length?arr.map(function(x){return scheinCard(x);}).join(''):'<div class="empty">Noch keine Scheine für diesen Filter.</div>';
+  }).catch(function(){ box.innerHTML='<div class="empty">Scheine konnten nicht geladen werden.</div>'; });
+}
+function renderKonk(){
+  var box=document.getElementById('konkList'); if(!box) return;
+  if(!CUR_GROUP){ box.innerHTML=''; return; }
+  var code=CUR_GROUP._code||CUR_GROUP.code, uid=fbUid();
+  fbDB().ref('groups/'+code+'/slips').once('value').then(function(s){
+    var data=s.val()||{}; var arr=[];
+    Object.keys(data).forEach(function(u){ if(u===uid) return; var us=data[u]||{}; Object.keys(us).forEach(function(k){ arr.push(us[k]); }); });
+    arr.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
+    box.innerHTML=arr.length?arr.map(function(x){return scheinCard(x,x.name||'Gegner');}).join(''):'<div class="empty">Noch keine gegnerischen Scheine.</div>';
+  }).catch(function(){ box.innerHTML=''; });
 }
 </script>
 </body>
