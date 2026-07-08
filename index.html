@@ -483,7 +483,7 @@ fbAuth.onAuthStateChanged(function(user){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 12</div>
+        <div class="hdr-sub2">Tippspiel · Build 13</div>
       </div>
     </div>
   </header>
@@ -1899,6 +1899,55 @@ function renderDash(){
   var gv=document.getElementById('dashGV'); if(gv) gv.textContent=(net>0?'+':'')+fmt(net)+' Münzen';
   var host=document.getElementById('dashWidgets'); if(host) host.innerHTML=activeWidgets.map(dashWidgetHTML).join('');
 }
+</script>
+<script>
+/* ===== B2.3++: mehr Wettmärkte + Dashboard gv/tracker echt ===== */
+function poisOver(lam,line){ var need=Math.ceil(line),cum=0,term=Math.exp(-lam); for(var k=0;k<need;k++){cum+=term;term*=lam/(k+1);} return Math.max(0.05,Math.min(0.95,1-cum)); }
+function bttsProb(xH,xA){ return Math.max(0.08,Math.min(0.92,(1-Math.exp(-xH))*(1-Math.exp(-xA)))); }
+function tipName(k){ var m={'1':'Heimsieg','X':'Unentschieden','2':'Auswärtssieg','1X':'Heim/Remis','12':'Heim/Auswärts','X2':'Remis/Auswärts','BTTS Ja':'Beide treffen','BTTS Nein':'Kein Doppeltreffer'}; return m[k]||k; }
+function betCard(o){
+  var html='<div class="match mx">';
+  var clk=o.detailHTML?(' onclick="toggleMatchDetail(\''+o.mid+'\')"'):'';
+  html+='<div class="mx-head"'+clk+'>';
+  html+='<div class="match-top"><span>'+(o.when||'—')+'</span>'+(o.fin?'<span class="tag" style="background:#eef0f4;color:var(--ink-2)">Beendet</span>':'')+'</div>';
+  var mid2=o.fin?('<div class="res-score">'+(o.hs!=null?o.hs:'-')+' : '+(o.as!=null?o.as:'-')+'</div>'):'<div class="match-vs">:</div>';
+  html+='<div class="match-main"><div class="tm"><div class="crest">'+o.hCrest+'</div><div class="tm-name">'+esc(o.h)+'</div></div>'+mid2+'<div class="tm away"><div class="crest">'+o.aCrest+'</div><div class="tm-name">'+esc(o.a)+'</div></div></div>';
+  html+=probBar(o.pp);
+  html+='<div class="prob-lbl"><span style="color:var(--win)">'+olAbbr(o.h)+' '+o.pp.wH+'%</span><span style="color:var(--draw)">Unent. '+o.pp.wD+'%</span><span style="color:var(--loss)">'+olAbbr(o.a)+' '+o.pp.wA+'%</span></div>';
+  html+='<div class="mx-chips"><span class="chip conf-'+o.pp.conf+'">Konfidenz: '+confLabel(o.pp.conf)+'</span><span class="chip">xG '+o.pp.xH+'–'+o.pp.xA+'</span>'+(o.detailHTML?'<span class="chip mx-more">Details ▾</span>':'')+'</div>';
+  html+='</div>';
+  if(!o.fin){
+    var mm={id:o.mid,h:o.h,a:o.a}, pp=o.pp;
+    html+='<div class="odds">'+oddBtn(mm,'1',calcOdds(pp.wH))+oddBtn(mm,'X',calcOdds(pp.wD))+oddBtn(mm,'2',calcOdds(pp.wA))+'</div>';
+    html+='<div class="more-row"><button class="more-btn" onclick="toggleExtra(\''+o.mid+'\')"><span>Weitere Wetten</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button></div>';
+    var lam=(parseFloat(pp.xH)||1.3)+(parseFloat(pp.xA)||1.1); var btts=bttsProb(parseFloat(pp.xH)||1.3,parseFloat(pp.xA)||1.1);
+    html+='<div class="extra" id="ex-'+o.mid+'">';
+    html+='<div class="extra-lbl">Doppelte Chance</div><div class="odds" style="padding:0 14px 10px">'+oddBtn(mm,'1X',calcOdds(pp.wH+pp.wD))+oddBtn(mm,'12',calcOdds(pp.wH+pp.wA))+oddBtn(mm,'X2',calcOdds(pp.wD+pp.wA))+'</div>';
+    html+='<div class="extra-lbl">Über/Unter Tore</div>';
+    [1.5,2.5,3.5].forEach(function(ln){ var po=poisOver(lam,ln); html+='<div class="odds" style="padding:0 14px 8px">'+oddBtn(mm,'Über '+ln,calcOdds(po*100))+oddBtn(mm,'Unter '+ln,calcOdds((1-po)*100))+'</div>'; });
+    html+='<div class="extra-lbl">Beide Teams treffen</div><div class="odds" style="padding:0 14px 14px">'+oddBtn(mm,'BTTS Ja',calcOdds(btts*100))+oddBtn(mm,'BTTS Nein',calcOdds((1-btts)*100))+'</div>';
+    html+='</div>';
+  } else { html+='<div class="locked"><span class="ic">🔒</span> Spiel beendet – keine Wette möglich</div>'; }
+  if(o.detailHTML){ html+='<div class="mx-det" id="det-'+o.mid+'" style="display:none">'+o.detailHTML+'</div>'; }
+  html+='</div>'; return html;
+}
+var _pwi=widgetInner;
+widgetInner=function(id){
+  var groups=(typeof MY_GROUPS!=='undefined'&&MY_GROUPS)||[], uid=fbUid();
+  if(id==='gv'){
+    var net=0; groups.forEach(function(g){ var sb=g.startBalance||1000; var me=(g.members&&g.members[uid]); if(me){ net+=((me.balance||0)-sb); } });
+    var col=net>0?'var(--win)':net<0?'var(--loss)':'var(--ink)';
+    var per=groups.map(function(g){ var sb=g.startBalance||1000; var me=(g.members&&g.members[uid])||{}; var d=(me.balance||0)-sb; var c=d>0?'var(--win)':d<0?'var(--loss)':'var(--ink-3)'; return '<div class="trk"><div class="trk-m"><div class="n">'+esc(g.name||'Gruppe')+'</div><div class="h">'+(g.league==='wm2026'?'WM 2026':'Bundesliga')+'</div></div><div class="trk-gv" style="color:'+c+'">'+(d>0?'+':'')+fmt(d)+' Münzen</div></div>'; }).join('');
+    return '<div class="card-h"><h2>Gewinn / Verlust</h2><p>über alle Gruppen</p></div><div style="padding:16px 16px 6px"><div style="font-size:30px;font-weight:900;color:'+col+'">'+(net>0?'+':'')+fmt(net)+' Münzen</div><div style="font-size:12px;color:var(--ink-3);margin-top:2px">'+groups.length+' '+(groups.length===1?'Gruppe':'Gruppen')+'</div></div>'+(per?'<div class="rows">'+per+'</div>':'');
+  }
+  if(id==='tracker'){
+    var mp={}; groups.forEach(function(g){ var sb=g.startBalance||1000; var mem=g.members||{}; Object.keys(mem).forEach(function(u){ if(u===uid) return; var nm=(mem[u]&&mem[u].name)||'?'; var bal=(mem[u]&&mem[u].balance)||0; if(!mp[nm]) mp[nm]={net:0,g:0}; mp[nm].net+=(bal-sb); mp[nm].g++; }); });
+    var arr=Object.keys(mp).map(function(n){return {name:n,net:mp[n].net,g:mp[n].g};}).sort(function(a,b){return b.net-a.net;}).slice(0,6);
+    if(!arr.length) return '<div class="card-h"><h2>Spieler im Blick</h2></div><div style="padding:16px;color:var(--ink-3);font-size:13px">Noch keine Mitspieler – tritt einer Gruppe bei oder lade Freunde ein.</div>';
+    return '<div class="card-h"><h2>Spieler im Blick</h2><p>Mitspieler nach Gewinn</p></div><div class="rows">'+arr.map(function(pl){ var c=pl.net>0?'var(--win)':pl.net<0?'var(--loss)':'var(--ink-3)'; return '<div class="trk"><div class="trk-av">'+esc((pl.name[0]||'?').toUpperCase())+'</div><div class="trk-m"><div class="n">'+esc(pl.name)+'</div><div class="h">'+pl.g+' '+(pl.g===1?'Gruppe':'Gruppen')+'</div></div><div class="trk-gv" style="color:'+c+'">'+(pl.net>0?'+':'')+fmt(pl.net)+' Münzen</div></div>'; }).join('')+'</div>';
+  }
+  return _pwi(id);
+};
 </script>
 </body>
 </html>
