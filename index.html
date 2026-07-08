@@ -483,7 +483,7 @@ fbAuth.onAuthStateChanged(function(user){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 11</div>
+        <div class="hdr-sub2">Tippspiel · Build 12</div>
       </div>
     </div>
   </header>
@@ -1471,7 +1471,7 @@ function renderGroups(){
   if(!fbUid()){ box.innerHTML='<div class="empty">Bitte anmelden, um Gruppen zu sehen.</div>'; return; }
   box.innerHTML='<div class="empty">Lädt Gruppen …</div>';
   fbLoadMyGroups().then(function(gs){
-    MY_GROUPS=gs;
+    MY_GROUPS=gs; try{renderDash();renderRanking();}catch(e){}
     if(!gs.length){ box.innerHTML='<div class="empty">Noch keine Gruppen. Erstelle eine oder tritt mit einem Code bei.</div>'; return; }
     box.innerHTML=gs.map(function(g){
       var mc=g.members?Object.keys(g.members).length:0;
@@ -1846,6 +1846,58 @@ function renderKonk(){
     arr.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
     box.innerHTML=arr.length?arr.map(function(x){return scheinCard(x,x.name||'Gegner');}).join(''):'<div class="empty">Noch keine gegnerischen Scheine.</div>';
   }).catch(function(){ box.innerHTML=''; });
+}
+</script>
+<script>
+/* ===== B2.3+: Über/Unter, Ranking + Start echte Daten ===== */
+function ouOdds(pp){ var lam=(parseFloat(pp.xH)||1.3)+(parseFloat(pp.xA)||1.1); if(lam<0.3)lam=0.3; var pLe2=Math.exp(-lam)*(1+lam+lam*lam/2); var pOver=Math.max(0.06,Math.min(0.94,1-pLe2)); return { over:calcOdds(pOver*100), under:calcOdds((1-pOver)*100) }; }
+function betCard(o){
+  var html='<div class="match mx">';
+  var clk=o.detailHTML?(' onclick="toggleMatchDetail(\''+o.mid+'\')"'):'';
+  html+='<div class="mx-head"'+clk+'>';
+  html+='<div class="match-top"><span>'+(o.when||'—')+'</span>'+(o.fin?'<span class="tag" style="background:#eef0f4;color:var(--ink-2)">Beendet</span>':'')+'</div>';
+  var mid2=o.fin?('<div class="res-score">'+(o.hs!=null?o.hs:'-')+' : '+(o.as!=null?o.as:'-')+'</div>'):'<div class="match-vs">:</div>';
+  html+='<div class="match-main"><div class="tm"><div class="crest">'+o.hCrest+'</div><div class="tm-name">'+esc(o.h)+'</div></div>'+mid2+'<div class="tm away"><div class="crest">'+o.aCrest+'</div><div class="tm-name">'+esc(o.a)+'</div></div></div>';
+  html+=probBar(o.pp);
+  html+='<div class="prob-lbl"><span style="color:var(--win)">'+olAbbr(o.h)+' '+o.pp.wH+'%</span><span style="color:var(--draw)">Unent. '+o.pp.wD+'%</span><span style="color:var(--loss)">'+olAbbr(o.a)+' '+o.pp.wA+'%</span></div>';
+  html+='<div class="mx-chips"><span class="chip conf-'+o.pp.conf+'">Konfidenz: '+confLabel(o.pp.conf)+'</span><span class="chip">xG '+o.pp.xH+'–'+o.pp.xA+'</span>'+(o.detailHTML?'<span class="chip mx-more">Details ▾</span>':'')+'</div>';
+  html+='</div>';
+  if(!o.fin){
+    var mm={id:o.mid,h:o.h,a:o.a};
+    html+='<div class="odds">'+oddBtn(mm,'1',calcOdds(o.pp.wH))+oddBtn(mm,'X',calcOdds(o.pp.wD))+oddBtn(mm,'2',calcOdds(o.pp.wA))+'</div>';
+    var ou=ouOdds(o.pp);
+    html+='<div class="more-row"><button class="more-btn" onclick="toggleExtra(\''+o.mid+'\')"><span>Über/Unter Tore</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button></div>';
+    html+='<div class="extra" id="ex-'+o.mid+'"><div class="extra-lbl">Tore über/unter 2,5</div><div class="odds" style="padding:0 14px 14px">'+oddBtn(mm,'Über 2.5',ou.over)+oddBtn(mm,'Unter 2.5',ou.under)+'</div></div>';
+  } else { html+='<div class="locked"><span class="ic">🔒</span> Spiel beendet – keine Wette möglich</div>'; }
+  if(o.detailHTML){ html+='<div class="mx-det" id="det-'+o.mid+'" style="display:none">'+o.detailHTML+'</div>'; }
+  html+='</div>'; return html;
+}
+function renderRanking(){
+  var rt=document.getElementById('rankTotal'), rs=document.getElementById('rankSingle');
+  if(!rt) return;
+  var groups=(typeof MY_GROUPS!=='undefined'&&MY_GROUPS)||[];
+  var agg={};
+  groups.forEach(function(g){ var sb=g.startBalance||1000; var mem=g.members||{}; Object.keys(mem).forEach(function(u){ var nm=(mem[u]&&mem[u].name)||'?'; var bal=(mem[u]&&mem[u].balance)||0; if(!agg[nm]) agg[nm]={net:0,groups:0}; agg[nm].net+=(bal-sb); agg[nm].groups++; }); });
+  var arr=Object.keys(agg).map(function(n){return {name:n,net:agg[n].net,groups:agg[n].groups};}).sort(function(a,b){return b.net-a.net;});
+  rt.innerHTML=arr.length?arr.map(function(r,i){ var col=r.net>0?'var(--win)':r.net<0?'var(--loss)':'var(--ink)'; return '<div class="lb-row"><div class="lb-rk '+(i<3?'top':'')+'">'+(i+1)+'</div><div class="lb-av">'+esc((r.name[0]||'?').toUpperCase())+'</div><div class="lb-m"><div class="n">'+esc(r.name)+'</div><div class="h">'+r.groups+' '+(r.groups===1?'Gruppe':'Gruppen')+'</div></div><div class="lb-b" style="color:'+col+'">'+(r.net>0?'+':'')+fmt(r.net)+' Münzen</div></div>'; }).join('') : '<div class="empty" style="padding:16px">Noch keine Gruppen – erstelle eine oder tritt einer bei.</div>';
+  if(rs) rs.innerHTML='<div class="empty" style="padding:16px">Größte Einzelgewinne erscheinen nach der Auswertung.</div>';
+}
+var _origWidgetInner=widgetInner;
+widgetInner=function(id){
+  if(id==='balance'){
+    var groups=(typeof MY_GROUPS!=='undefined'&&MY_GROUPS)||[], uid=fbUid();
+    if(!groups.length) return '<div class="card-h"><h2>Guthaben pro Gruppe</h2></div><div style="padding:16px;color:var(--ink-3);font-size:13px">Noch keine Gruppen.</div>';
+    var cells=groups.map(function(g){ var sb=g.startBalance||1000; var me=(g.members&&g.members[uid])||{}; var bal=me.balance||0; var gvv=bal-sb; var col=gvv>0?'var(--win)':gvv<0?'var(--loss)':'var(--ink-3)'; var lg=g.league==='wm2026'?'WM 2026':'Bundesliga'; return '<div class="bal-cell"><div class="lg">'+esc(g.name||'Gruppe')+' · '+lg+'</div><div class="am">'+fmt(bal)+' Münzen</div><div class="gv" style="color:'+col+'">'+(gvv>0?'+':'')+fmt(gvv)+' Münzen</div></div>'; }).join('');
+    return '<div class="card-h"><h2>Guthaben pro Gruppe</h2></div><div class="bal-grid">'+cells+'</div>';
+  }
+  return _origWidgetInner(id);
+};
+function renderDash(){
+  var groups=(typeof MY_GROUPS!=='undefined'&&MY_GROUPS)||[], uid=fbUid();
+  var net=0;
+  groups.forEach(function(g){ var sb=g.startBalance||1000; var me=(g.members&&g.members[uid]); if(me){ net+=((me.balance||0)-sb); } });
+  var gv=document.getElementById('dashGV'); if(gv) gv.textContent=(net>0?'+':'')+fmt(net)+' Münzen';
+  var host=document.getElementById('dashWidgets'); if(host) host.innerHTML=activeWidgets.map(dashWidgetHTML).join('');
 }
 </script>
 </body>
