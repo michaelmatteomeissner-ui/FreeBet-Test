@@ -483,7 +483,7 @@ fbAuth.onAuthStateChanged(function(user){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 9</div>
+        <div class="hdr-sub2">Tippspiel · Build 10</div>
       </div>
     </div>
   </header>
@@ -1531,8 +1531,8 @@ function fillGroupDetail(g){
   document.getElementById('gdBal').textContent=fmt(myIdx>=0?CUR_MEMBERS[myIdx].balance:0)+' Münzen';
   document.getElementById('gdRank').textContent=(myIdx>=0?(myIdx+1):'-')+'.';
   var at=document.getElementById('adminToggleBtn'); if(at) at.style.display=(g.ownerUid===uid)?'':'none';
-  gSelMD=CURRENT_MD; var gm=document.getElementById('gMdNum'); if(gm) gm.textContent=CURRENT_MD+'. Spieltag';
-  renderGdTable(); renderMeScheine(); renderKonk(); renderAdminMembers();
+  if(g.league==='wm2026'){ wmSelRound=null; } else { gSelMD=(typeof BL_CUR_MD!=='undefined'&&BL_CUR_MD)?BL_CUR_MD:CURRENT_MD; }
+  renderGroupSpiele(); renderGdTable(); renderMeScheine(); renderKonk(); renderAdminMembers();
 }
 function renderGdTable(){
   var box=document.getElementById('gdTblRows'); if(!box) return;
@@ -1692,14 +1692,14 @@ function loadMatchupMatches(){
 }
 (function(){var s=document.createElement('style');s.textContent=
  '.mx-head{cursor:pointer}'
- +'.prob-bar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin:11px 0 6px;background:#eef0f4}'
+ +'.prob-bar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin:11px 14px 6px;background:#eef0f4}'
  +'.prob-bar span{display:block;height:100%}'
- +'.prob-lbl{display:flex;justify-content:space-between;font-size:11px;font-weight:800;margin-bottom:9px}'
- +'.mx-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}'
+ +'.prob-lbl{display:flex;justify-content:space-between;font-size:11px;font-weight:800;margin:0 14px 9px}'
+ +'.mx-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:0 14px 14px}'
  +'.chip{font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;background:#eef0f4;color:var(--ink-2)}'
  +'.chip.conf-high{background:#d8f5e3;color:#0c7a37}.chip.conf-med{background:#fef3c7;color:#92600a}.chip.conf-low{background:#fde2e2;color:#b42318}'
  +'.mx-more{margin-left:auto;color:var(--navy);cursor:pointer}'
- +'.mx-det{border-top:1px solid var(--line);margin-top:12px;padding-top:4px}'
+ +'.mx-det{border-top:1px solid var(--line-2);margin:0 14px;padding:12px 0 14px}'
  +'.det-sec{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3);margin:11px 0 5px}'
  +'.pr{display:flex;align-items:center;gap:9px;margin:3px 0;font-size:12px}'
  +'.pr-l{flex:0 0 92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}'
@@ -1714,6 +1714,42 @@ function loadMatchupMatches(){
  +'.fb.w{background:var(--win)}.fb.d{background:var(--draw)}.fb.l{background:var(--loss)}.fb.x{background:#cbd2de}'
  +'.det-ki{margin-top:10px;padding:10px 12px;background:#f5f6f9;border:1px solid #e3e7ef;border-radius:11px;font-size:12px;color:var(--ink-2);line-height:1.6}';
  document.head.appendChild(s);})();
+</script>
+<script>
+/* ===== Gruppen-Spiele: echte Liga-Spiele (BL-Spieltag / WM-Runde) + Picker ===== */
+function grpLeague(){ return (CUR_GROUP&&CUR_GROUP.league)||'bl1'; }
+function renderMdGrid(sel){
+  var grid=document.getElementById('mdGrid'); if(!grid) return;
+  var lg=(mdCtx==='group')?grpLeague():activeLeague;
+  if(lg==='wm2026'){
+    grid.removeAttribute('style'); grid.style.display='block'; grid.style.maxHeight='54vh'; grid.style.overflowY='auto';
+    var keys=WM_ROUND_KEYS.length?WM_ROUND_KEYS:(WM_CACHE?wmOrderedRounds(WM_CACHE):[]);
+    var cur=wmSelRound||wmCurrentRound(WM_CACHE||[]);
+    var h=''; keys.forEach(function(r,idx){ h+='<div class="wm-rd'+(r===wmSelRound?' sel':'')+'" onclick="chooseWmRound('+idx+')"><span>'+wmRoundLabelDe(r)+'</span>'+(r===cur?'<small>aktuell</small>':'')+'</div>'; });
+    grid.innerHTML=h||'<div class="empty" style="padding:10px">Lädt …</div>';
+    return;
+  }
+  grid.removeAttribute('style'); grid.style.display='';
+  var curmd=BL_CUR_MD||CURRENT_MD; var hh=''; for(var i=1;i<=34;i++){ var cls=i===sel?'sel':(i<curmd?'done':(i>curmd?'future':'')); hh+='<div class="md-cell '+cls+'" onclick="chooseMd('+i+')">'+i+(i===curmd?'<small>jetzt</small>':'')+'</div>'; }
+  grid.innerHTML=hh;
+}
+function chooseWmRound(idx){ var keys=WM_ROUND_KEYS.length?WM_ROUND_KEYS:(WM_CACHE?wmOrderedRounds(WM_CACHE):[]); wmSelRound=keys[idx]; if(mdCtx==='group'){ renderGroupSpiele(); } else { renderWMRound(); } closeMdPicker(); }
+function renderGroupSpiele(){
+  var box=document.getElementById('matchList'); if(!box) return;
+  var lbl=document.getElementById('gdMdLabel'), mn=document.getElementById('gMdNum');
+  var lg=grpLeague();
+  if(lg==='wm2026'){
+    box.innerHTML='<div class="empty">Lädt WM-Spiele …</div>';
+    var render=function(){ if(!WM_CACHE||!WM_CACHE.length){ box.innerHTML='<div class="empty">Keine WM-Daten verfügbar.</div>'; return; } if(!wmSelRound) wmSelRound=wmCurrentRound(WM_CACHE); if(mn) mn.textContent=wmRoundLabelDe(wmSelRound); if(lbl) lbl.textContent='WM 2026 · '+wmRoundLabelDe(wmSelRound); var list=WM_CACHE.filter(function(m){return (m.round||'?')===wmSelRound;}).sort(function(a,b){return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''));}); box.innerHTML=list.length?list.map(wmMatchCard).join(''):'<div class="empty">Keine Spiele in dieser Runde.</div>'; };
+    if(WM_CACHE){ if(!WM_ROUND_KEYS.length) WM_ROUND_KEYS=wmOrderedRounds(WM_CACHE); render(); }
+    else { proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; WM_CACHE=ms; WM_ROUND_KEYS=wmOrderedRounds(ms); render(); }).catch(function(){ box.innerHTML='<div class="empty">WM-Spiele konnten nicht geladen werden. Bitte später erneut.</div>'; }); }
+    return;
+  }
+  if(mn) mn.textContent=gSelMD+'. Spieltag';
+  if(lbl) lbl.textContent='Spieltag '+gSelMD+' · Saison '+olSeasonLabel();
+  box.innerHTML='<div class="empty">Lädt Spiele & Analyse …</div>';
+  Promise.all([apiFetch('/getmatchdata/bl1/'+olSeason()+'/'+gSelMD).catch(function(){return null;}), ensureBLData()]).then(function(r){ var data=r[0]; if(!Array.isArray(data)||!data.length){ box.innerHTML='<div class="empty">Keine Spiele für diesen Spieltag.</div>'; return; } box.innerHTML=data.map(matchCardFull).join(''); }).catch(function(){ box.innerHTML='<div class="empty">Spiele konnten nicht geladen werden. Bitte später erneut.</div>'; });
+}
 </script>
 </body>
 </html>
