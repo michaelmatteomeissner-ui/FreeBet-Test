@@ -483,7 +483,7 @@ fbAuth.onAuthStateChanged(function(user){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 14</div>
+        <div class="hdr-sub2">Tippspiel · Build 15</div>
       </div>
     </div>
   </header>
@@ -680,28 +680,29 @@ fbAuth.onAuthStateChanged(function(user){
     <section class="screen" data-s="profil">
       <div class="stack">
         <div class="p-hero">
-          <div class="p-av">LM</div>
-          <div><div class="nm">Lukas Meyer</div><div class="hd">@lukasm · lukas.meyer@mail.de</div><div class="ms">Mitglied seit Juni 2026</div></div>
+          <div class="p-av" id="pfAv">–</div>
+          <div><div class="nm" id="pfName">…</div><div class="hd" id="pfSub"></div><div class="ms" id="pfSince"></div></div>
         </div>
+        <div class="card"><div class="p-stats"><div><div class="v" id="pfStatGroups">0</div><div class="k">Gruppen</div></div><div><div class="v" id="pfStatBal">0</div><div class="k">Guthaben Münzen</div></div><div><div class="v" id="pfStatGv">0</div><div class="k">Gewinn/Verlust Münzen</div></div></div></div>
         <div class="card"><div class="card-h"><h2>Erscheinungsbild</h2></div>
-          <div class="appear"><button class="active"><span class="e">☀️</span>Hell</button><button><span class="e">🌙</span>Dunkel</button><button><span class="e">⚙️</span>System</button></div>
+          <div class="appear"><button class="active" data-th="light" onclick="pfSetTheme('light',this)"><span class="e">☀️</span>Hell</button><button data-th="dark" onclick="pfSetTheme('dark',this)"><span class="e">🌙</span>Dunkel</button><button data-th="system" onclick="pfSetTheme('system',this)"><span class="e">⚙️</span>System</button></div>
         </div>
         <div class="card">
-          <div class="set-row"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span><span class="lb">Benachrichtigungen</span><span class="toggle" onclick="this.classList.toggle('off')"></span></div>
-          <div class="set-row" onclick="toast('Profil bearbeiten')"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="lb">Profil bearbeiten</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+          <div class="set-row"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span><span class="lb">Benachrichtigungen</span><span class="toggle" id="pfNotif" onclick="pfToggleNotif(this)"></span></div>
+          <div class="set-row" onclick="pfEditName()"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="lb">Profil bearbeiten</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
           <div class="set-row" onclick="toast('Sprache: Deutsch')"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg></span><span class="lb">Sprache</span><span class="vl">Deutsch</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
         </div>
         <div class="card"><div class="card-h"><h2>Hilfe &amp; Support</h2></div><div id="faq"></div></div>
         <div class="card">
-          <div class="link-row" onclick="toast('Anleitung öffnen')"><span class="e">📘</span><div class="t"><div class="n">Komplette Anleitung</div><div class="d">Spielregeln Schritt für Schritt</div></div><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
-          <div class="link-row" onclick="toast('Produktwebseite öffnen')"><span class="e">🌐</span><div class="t"><div class="n">Produktwebseite</div><div class="d">freebet-pro.de</div></div><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span></div>
-          <div class="link-row" onclick="toast('Support kontaktieren')"><span class="e">✉️</span><div class="t"><div class="n">Support kontaktieren</div><div class="d">info@freebet-pro.de</div></div><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+          <div class="link-row" onclick="window.open('anleitung.html','_blank')"><span class="e">📘</span><div class="t"><div class="n">Komplette Anleitung</div><div class="d">Spielregeln Schritt für Schritt</div></div><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+          <div class="link-row" onclick="window.open('index.html','_blank')"><span class="e">🌐</span><div class="t"><div class="n">Produktwebseite</div><div class="d">freebet-pro.de</div></div><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span></div>
+          <div class="link-row" onclick="location.href='mailto:info@freebet-pro.de'"><span class="e">✉️</span><div class="t"><div class="n">Support kontaktieren</div><div class="d">info@freebet-pro.de</div></div><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
         </div>
         <div class="card">
           <div class="set-row" onclick="authLogout()"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span><span class="lb">Abmelden</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
-          <div class="set-row danger" onclick="toast('Konto löschen – Bestätigung nötig')"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></span><span class="lb">Konto löschen</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+          <div class="set-row danger" onclick="pfDeleteAccount()"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></span><span class="lb">Konto löschen</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
         </div>
-        <div class="foot">FreeBet · nur Spielgeld, keine echten Einsätze<br>Impressum · Datenschutz · AGB</div>
+        <div class="foot">FreeBet · nur Spielgeld, keine echten Einsätze<br><a href="impressum.html" target="_blank">Impressum</a> · <a href="datenschutz.html" target="_blank">Datenschutz</a> · <a href="agb.html" target="_blank">AGB</a></div>
       </div>
     </section>
 
@@ -1471,7 +1472,7 @@ function renderGroups(){
   if(!fbUid()){ box.innerHTML='<div class="empty">Bitte anmelden, um Gruppen zu sehen.</div>'; return; }
   box.innerHTML='<div class="empty">Lädt Gruppen …</div>';
   fbLoadMyGroups().then(function(gs){
-    MY_GROUPS=gs; try{renderDash();renderRanking();}catch(e){}
+    MY_GROUPS=gs; try{renderDash();renderRanking();try{renderProfil();}catch(e){}}catch(e){}
     if(!gs.length){ box.innerHTML='<div class="empty">Noch keine Gruppen. Erstelle eine oder tritt mit einem Code bei.</div>'; return; }
     box.innerHTML=gs.map(function(g){
       var mc=g.members?Object.keys(g.members).length:0;
@@ -1971,6 +1972,55 @@ widgetInner=function(id){
   if(id==='next') return '<div class="card-h"><h2>Nächster Anpfiff</h2></div><div style="padding:16px;color:var(--ink-3);font-size:13px">Öffne eine Gruppe → „Spiele", um auf das nächste Match zu tippen.</div>';
   return _pwi2(id);
 };
+</script>
+<script>
+/* ===== Profil-Bereich: echte Daten + Funktionen ===== */
+function pfInitials(n){ n=(n||'').trim(); if(!n) return 'FB'; var p=n.split(/\s+/); return ((p[0][0]||'')+(p[1]?p[1][0]:(p[0][1]||''))).toUpperCase(); }
+function renderProfil(){
+  var u=(typeof FB_USER!=='undefined')?FB_USER:null; if(!u) return;
+  var nm=u.displayName||'Spieler', em=u.email||'';
+  var av=document.getElementById('pfAv'); if(av) av.textContent=pfInitials(nm);
+  var n=document.getElementById('pfName'); if(n) n.textContent=nm;
+  var s=document.getElementById('pfSub'); if(s) s.textContent='@'+nm.toLowerCase().replace(/\s+/g,'')+(em?(' · '+em):'');
+  var since=document.getElementById('pfSince'); if(since){ var ct=u.metadata&&u.metadata.creationTime; var d=ct?new Date(ct):null; since.textContent='Mitglied seit '+((d&&!isNaN(d))?d.toLocaleDateString('de-DE',{month:'long',year:'numeric'}):'2026'); }
+  var groups=(typeof MY_GROUPS!=='undefined'&&MY_GROUPS)||[], uid=fbUid(), tot=0, net=0;
+  groups.forEach(function(g){ var me=(g.members&&g.members[uid]); if(me){ tot+=(me.balance||0); net+=((me.balance||0)-(g.startBalance||1000)); } });
+  var sg=document.getElementById('pfStatGroups'); if(sg) sg.textContent=groups.length;
+  var sb=document.getElementById('pfStatBal'); if(sb) sb.textContent=fmt(tot);
+  var sv=document.getElementById('pfStatGv'); if(sv){ sv.textContent=(net>0?'+':'')+fmt(net); sv.style.color=net>0?'var(--win)':net<0?'var(--loss)':'var(--ink)'; }
+}
+function pfEditName(){
+  var cur=((typeof FB_USER!=='undefined'&&FB_USER)?FB_USER.displayName:'')||'';
+  var nn=prompt('Neuer Anzeigename:',cur); if(nn==null) return; nn=nn.trim(); if(!nn){ toast('Name darf nicht leer sein'); return; }
+  var u=fbAuth.currentUser; if(!u){ toast('Nicht angemeldet'); return; }
+  u.updateProfile({displayName:nn}).then(function(){ FB_USER.displayName=nn; renderProfil(); var dh=document.getElementById('dashHello'); if(dh) dh.textContent='Hallo '+nn+' 👋'; toast('Name aktualisiert'); }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
+}
+function pfSetTheme(th,el){
+  document.querySelectorAll('.appear button').forEach(function(b){ b.classList.remove('active'); });
+  if(el) el.classList.add('active'); else { var b=document.querySelector('.appear button[data-th="'+th+'"]'); if(b) b.classList.add('active'); }
+  var dark = th==='dark' || (th==='system' && window.matchMedia && matchMedia('(prefers-color-scheme:dark)').matches);
+  document.body.classList.toggle('theme-dark', !!dark);
+  var uid=fbUid(); if(uid){ try{ fbDB().ref('users/'+uid+'/prefs/theme').set(th); }catch(e){} }
+}
+function pfToggleNotif(el){ el.classList.toggle('off'); var on=!el.classList.contains('off'); var uid=fbUid(); if(uid){ try{ fbDB().ref('users/'+uid+'/prefs/notif').set(on); }catch(e){} } toast(on?'Benachrichtigungen an':'Benachrichtigungen aus'); }
+function pfLoadPrefs(){ var uid=fbUid(); if(!uid) return; fbDB().ref('users/'+uid+'/prefs').once('value').then(function(s){ var pr=s.val()||{}; if(pr.theme) pfSetTheme(pr.theme,null); var nt=document.getElementById('pfNotif'); if(nt && pr.notif===false) nt.classList.add('off'); }).catch(function(){}); }
+function pfDeleteAccount(){
+  if(!confirm('Konto wirklich löschen? Deine Daten werden entfernt und das lässt sich nicht rückgängig machen.')) return;
+  var u=fbAuth.currentUser, uid=fbUid(); if(!u){ toast('Nicht angemeldet'); return; }
+  try{ fbDB().ref('users/'+uid).remove(); }catch(e){}
+  u.delete().then(function(){ toast('Konto gelöscht'); }).catch(function(e){ var m=(e&&e.code==='auth/requires-recent-login')?'Bitte kurz ab- und wieder anmelden, dann erneut löschen.':'Fehler: '+((e&&e.message)||''); toast(m); });
+}
+try{ firebase.auth().onAuthStateChanged(function(u){ if(u){ renderProfil(); pfLoadPrefs(); } }); }catch(e){}
+(function(){var st=document.createElement('style');st.textContent=
+ '.p-stats{display:flex;text-align:center}.p-stats>div{flex:1;padding:14px 6px}.p-stats .v{font-size:20px;font-weight:900;color:var(--ink)}.p-stats .k{font-size:11px;color:var(--ink-3);margin-top:2px}.p-stats>div+div{border-left:1px solid var(--line)}'
+ +'.foot a{color:var(--ink-3);text-decoration:underline}'
+ +'body.theme-dark{--bg:#0e1626;--card:#182335;--tint:#1c2942;--ink:#eef2f8;--ink-2:#aeb9cb;--ink-3:#6d7789;--line:#26324a;--line-2:#26324a}'
+ +'body.theme-dark .app{background:#0e1626}'
+ +'body.theme-dark .card,body.theme-dark .match,body.theme-dark .hdr,body.theme-dark .nav,body.theme-dark .sheet{background:#182335;border-color:#26324a}'
+ +'body.theme-dark .odd,body.theme-dark .md-cell,body.theme-dark .chip,body.theme-dark .prob-bar,body.theme-dark .pr-bar{background:#1f2c44}'
+ +'body.theme-dark input,body.theme-dark select,body.theme-dark textarea{background:#1f2c44;color:#eef2f8;border-color:#26324a}'
+ +'body.theme-dark .nav button.active,body.theme-dark .nav .active{color:#eef2f8}';
+ document.body.appendChild(st);})();
 </script>
 </body>
 </html>
