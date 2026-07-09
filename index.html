@@ -443,6 +443,12 @@ fbAuth.onAuthStateChanged(function(user){
     var hi=document.getElementById('dashHello'); if(hi) hi.textContent='Hallo '+nm+' 👋';
     var pn=document.getElementById('profName'); if(pn) pn.textContent=nm;
     var pe=document.getElementById('profEmail'); if(pe) pe.textContent=user.email||'';
+    var pa=document.getElementById('profAvatar'); if(pa) pa.textContent=(nm||'?').trim().charAt(0).toUpperCase();
+    var pm=document.getElementById('profMeta');
+    if(pm){
+      var created=user.metadata&&user.metadata.creationTime?new Date(user.metadata.creationTime):null;
+      pm.textContent=created?('Mitglied seit '+created.toLocaleDateString('de-DE',{month:'long',year:'numeric'})):'';
+    }
   } else {
     if(gate) gate.classList.remove('hidden');
   }
@@ -483,7 +489,7 @@ fbAuth.onAuthStateChanged(function(user){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 13</div>
+        <div class="hdr-sub2">Tippspiel · Build 14</div>
       </div>
     </div>
   </header>
@@ -594,19 +600,17 @@ fbAuth.onAuthStateChanged(function(user){
         <div class="admin-panel" id="adminPanel" style="display:none">
           <div class="admin-sec">
             <div class="admin-sec-t">Gruppeneinstellungen</div>
-            <div class="admin-row"><span class="admin-lbl">Startguthaben (Münzen)</span><input class="admin-inp" type="number" value="1000"></div>
-            <div class="admin-row"><span class="admin-lbl">Mindesteinsatz</span><input class="admin-inp" type="number" value="5"></div>
-            <div class="admin-row"><span class="admin-lbl">Höchsteinsatz</span><input class="admin-inp" type="number" value="0" placeholder="0 = kein Limit"></div>
-            <div class="admin-row"><span class="admin-lbl">Scheine pro Spieltag</span><input class="admin-inp" type="number" value="1" placeholder="0 = unbegrenzt"></div>
-            <div class="admin-row"><span class="admin-lbl">Konkurrenz-Scheine</span><select class="admin-inp"><option>Erst nach Anpfiff</option><option>Immer sofort</option></select></div>
-            <button class="admin-btn primary" onclick="toast('Einstellungen gespeichert')">Speichern</button>
+            <div class="admin-row"><span class="admin-lbl">Startguthaben (Münzen)</span><input class="admin-inp" type="number" id="aStartBal" value="1000"></div>
+            <div class="admin-row"><span class="admin-lbl">Mindesteinsatz</span><input class="admin-inp" type="number" id="aMinStake" value="5"></div>
+            <div class="admin-row"><span class="admin-lbl">Höchsteinsatz</span><input class="admin-inp" type="number" id="aMaxStake" value="0" placeholder="0 = kein Limit"></div>
+            <div class="admin-row"><span class="admin-lbl">Scheine pro Spieltag</span><input class="admin-inp" type="number" id="aMaxSlips" value="1" placeholder="0 = unbegrenzt"></div>
+            <div class="admin-row"><span class="admin-lbl">Konkurrenz-Scheine</span><select class="admin-inp" id="aOppVis"><option value="afterKickoff">Erst nach Anpfiff</option><option value="always">Immer sofort</option></select></div>
+            <button class="admin-btn primary" onclick="adminSaveSettings()">Speichern</button>
           </div>
           <div class="admin-sec">
             <div class="admin-sec-t">Spieler einladen</div>
-            <div class="admin-hint">Teile diesen Link – Freunde treten automatisch bei:</div>
-            <div class="invite-box" onclick="toast('Einladungslink kopiert')">freebet-pro.de/join/BUERO-2026 📋</div>
-            <div class="admin-hint" style="margin-top:7px">Oder Code: <strong style="color:var(--navy);letter-spacing:1px">BÜRO26</strong></div>
-            <label class="admin-check"><input type="checkbox"> Beitritt nur mit Einladungscode</label>
+            <div class="admin-hint">Teile diesen Code – Freunde geben ihn beim Beitreten ein:</div>
+            <div class="invite-box" id="inviteBox" onclick="copyInviteCode()">Code wird geladen …</div>
           </div>
           <div class="admin-sec">
             <div class="admin-sec-t">Mitglieder</div>
@@ -615,12 +619,12 @@ fbAuth.onAuthStateChanged(function(user){
           <div class="admin-sec">
             <div class="admin-sec-t">Spieltag auswerten</div>
             <div class="admin-hint">Läuft normalerweise automatisch nach Spielende – hier manuell anstoßen.</div>
-            <button class="admin-btn primary" onclick="toast('Spieltag wird ausgewertet…')">Jetzt auswerten</button>
+            <button class="admin-btn primary" onclick="adminSettleNow()">Jetzt auswerten</button>
           </div>
           <div class="admin-sec danger">
             <div class="admin-sec-t" style="color:var(--loss)">Gefahrenzone</div>
-            <button class="admin-btn warn" onclick="toast('Neue Saison gestartet')">Neue Saison starten</button>
-            <button class="admin-btn del" onclick="toast('Gruppe gelöscht')">Gruppe löschen</button>
+            <button class="admin-btn warn" onclick="adminNewSeason()">Neue Saison starten</button>
+            <button class="admin-btn del" onclick="adminDeleteGroup()">Gruppe löschen</button>
           </div>
         </div>
         <button class="md-pick" onclick="openMdPicker('group')" style="margin-top:14px">
@@ -680,8 +684,8 @@ fbAuth.onAuthStateChanged(function(user){
     <section class="screen" data-s="profil">
       <div class="stack">
         <div class="p-hero">
-          <div class="p-av">LM</div>
-          <div><div class="nm">Lukas Meyer</div><div class="hd">@lukasm · lukas.meyer@mail.de</div><div class="ms">Mitglied seit Juni 2026</div></div>
+          <div class="p-av" id="profAvatar">?</div>
+          <div><div class="nm" id="profName">Spieler</div><div class="hd" id="profEmail"></div><div class="ms" id="profMeta"></div></div>
         </div>
         <div class="card"><div class="card-h"><h2>Erscheinungsbild</h2></div>
           <div class="appear"><button class="active"><span class="e">☀️</span>Hell</button><button><span class="e">🌙</span>Dunkel</button><button><span class="e">⚙️</span>System</button></div>
@@ -699,7 +703,7 @@ fbAuth.onAuthStateChanged(function(user){
         </div>
         <div class="card">
           <div class="set-row" onclick="authLogout()"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span><span class="lb">Abmelden</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
-          <div class="set-row danger" onclick="toast('Konto löschen – Bestätigung nötig')"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></span><span class="lb">Konto löschen</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+          <div class="set-row danger" onclick="accountDelete()"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></span><span class="lb">Konto löschen</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
         </div>
         <div class="foot">FreeBet · nur Spielgeld, keine echten Einsätze<br>Impressum · Datenschutz · AGB</div>
       </div>
@@ -909,7 +913,7 @@ function closeWidgetPicker(){ document.getElementById('wpBg').classList.remove('
 function toggleAdmin(){
   const p=document.getElementById('adminPanel'), open=p.style.display==='none';
   p.style.display=open?'block':'none';
-  if(open) renderAdminMembers();
+  if(open){ renderAdminMembers(); if(typeof loadAdminSettings==='function') loadAdminSettings(); }
 }
 function renderAdminMembers(){
   const m=[['Lukas Meyer',1240,true],['Mara',1180,false],['Sven',980,false],['Aylin',1320,false]];
@@ -1515,8 +1519,8 @@ function openGroup(code){
   slip=[]; slipOpen=false; renderSlip();
   document.getElementById('main').scrollTop=0;
   var g=MY_GROUPS.find(function(x){ return x._code===code; });
-  if(g){ fillGroupDetail(g); }
-  else { fbLoadGroup(code).then(function(gg){ if(gg){ MY_GROUPS.push(gg); fillGroupDetail(gg); } else { toast('Gruppe nicht gefunden'); closeGroup(); } }).catch(function(){ toast('Gruppe konnte nicht geladen werden'); closeGroup(); }); }
+  if(g){ fillGroupDetail(g); if(typeof settleAndRefreshGroup==='function') settleAndRefreshGroup(g); }
+  else { fbLoadGroup(code).then(function(gg){ if(gg){ MY_GROUPS.push(gg); fillGroupDetail(gg); if(typeof settleAndRefreshGroup==='function') settleAndRefreshGroup(gg); } else { toast('Gruppe nicht gefunden'); closeGroup(); } }).catch(function(){ toast('Gruppe konnte nicht geladen werden'); closeGroup(); }); }
 }
 function fillGroupDetail(g){
   var uid=fbUid();
@@ -1545,7 +1549,7 @@ function renderAdminMembers(){
   var box=document.getElementById('adminMembers'); if(!box) return;
   var uid=fbUid();
   box.innerHTML=CUR_MEMBERS.map(function(m){ var me=m.uid===uid;
-    return '<div class="mem-row"><div class="mem-av">'+esc((m.name||'?').charAt(0))+'</div><div class="mem-n">'+esc(m.name)+(me?'<span class="you">du</span>':'')+'<div class="mem-b">'+fmt(m.balance)+' Münzen</div></div><div class="mem-act">'+(me?'':'<button class="kick" onclick="fbKick(\''+m.uid+'\')" title="Entfernen">✕</button>')+'</div></div>';
+    return '<div class="mem-row"><div class="mem-av">'+esc((m.name||'?').charAt(0))+'</div><div class="mem-n">'+esc(m.name)+(me?'<span class="you">du</span>':'')+'<div class="mem-b">'+fmt(m.balance)+' Münzen</div></div><div class="mem-act"><button onclick="adminAdjBalance(\''+m.uid+'\')" title="Guthaben anpassen">±</button>'+(me?'':'<button class="kick" onclick="fbKick(\''+m.uid+'\')" title="Entfernen">✕</button>')+'</div></div>';
   }).join('') || '<div class="empty">Keine Mitglieder.</div>';
 }
 function fbKick(memUid){
@@ -1771,21 +1775,36 @@ function betCard(o){
 }
 function groupMatchCard(match){
   var h=match.team1.teamName, a=match.team2.teamName, pp=calcProbs(h,a), sc=match.matchIsFinished?olScore(match):null;
-  return betCard({ mid:'g'+(match.matchID||hashStr(h+a+(match.matchDateTime||''))), when:olDateTime(match.matchDateTime), fin:match.matchIsFinished, hs:sc?sc.hs:null, as:sc?sc.as:null, hCrest:crestHTML(h), aCrest:crestHTML(a), h:h, a:a, pp:pp, detailHTML:matchDetailHTML(match,pp) });
+  var started=!match.matchIsFinished && isMatchStarted(match.matchDateTime);
+  return betCard({ mid:'g'+(match.matchID||hashStr(h+a+(match.matchDateTime||''))), when:olDateTime(match.matchDateTime), fin:match.matchIsFinished, started:started, hs:sc?sc.hs:null, as:sc?sc.as:null, hCrest:crestHTML(h), aCrest:crestHTML(a), h:h, a:a, pp:pp, detailHTML:matchDetailHTML(match,pp) });
 }
 function groupWmCard(match){
   var h=match.team1, a=match.team2, pp=calcProbs(h,a);
   var fin=!!(match.score&&match.score.ft), hs=fin?match.score.ft[0]:null, as=fin?match.score.ft[1]:null;
+  var started=!fin && isWmMatchStarted(match);
   var when=match.date?(wmDate(match.date)+(match.time?(' · '+String(match.time).replace(/\s*UTC.*/i,'').trim()+' Uhr'):'')):'';
-  return betCard({ mid:'g'+hashStr(h+a+(match.date||'')), when:when, fin:fin, hs:hs, as:as, hCrest:wmCrest(h), aCrest:wmCrest(a), h:wmName(h), a:wmName(a), pp:pp, detailHTML:'' });
+  return betCard({ mid:'g'+hashStr(h+a+(match.date||'')), when:when, fin:fin, started:started, hs:hs, as:as, hCrest:wmCrest(h), aCrest:wmCrest(a), h:wmName(h), a:wmName(a), pp:pp, detailHTML:'' });
 }
+var GD_MD_FIRST_KICKOFF=null;
+function groupMatchdayStarted(){ return GD_MD_FIRST_KICKOFF?(Date.now()>=GD_MD_FIRST_KICKOFF):true; }
 function renderGroupSpiele(){
   var box=document.getElementById('matchList'); if(!box) return;
   var lbl=document.getElementById('gdMdLabel'), mn=document.getElementById('gMdNum');
   var lg=grpLeague();
+  GD_MD_FIRST_KICKOFF=null;
   if(lg==='wm2026'){
     box.innerHTML='<div class="empty">Lädt WM-Spiele …</div>';
-    var render=function(){ if(!WM_CACHE||!WM_CACHE.length){ box.innerHTML='<div class="empty">Keine WM-Daten verfügbar.</div>'; return; } if(!wmSelRound) wmSelRound=wmCurrentRound(WM_CACHE); if(mn) mn.textContent=wmRoundLabelDe(wmSelRound); if(lbl) lbl.textContent='WM 2026 · '+wmRoundLabelDe(wmSelRound); var list=WM_CACHE.filter(function(m){return (m.round||'?')===wmSelRound;}).sort(function(a,b){return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''));}); box.innerHTML=list.length?list.map(groupWmCard).join(''):'<div class="empty">Keine Spiele in dieser Runde.</div>'; syncOddStates(); };
+    var render=function(){
+      if(!WM_CACHE||!WM_CACHE.length){ box.innerHTML='<div class="empty">Keine WM-Daten verfügbar.</div>'; return; }
+      if(!wmSelRound) wmSelRound=wmCurrentRound(WM_CACHE);
+      if(mn) mn.textContent=wmRoundLabelDe(wmSelRound);
+      if(lbl) lbl.textContent='WM 2026 · '+wmRoundLabelDe(wmSelRound);
+      var list=WM_CACHE.filter(function(m){return (m.round||'?')===wmSelRound;}).sort(function(a,b){return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''));});
+      var kicks=list.map(function(m){ var t=wmDateTime(m.date,m.time); return t?t.getTime():Infinity; }).filter(function(t){return isFinite(t);});
+      GD_MD_FIRST_KICKOFF=kicks.length?Math.min.apply(null,kicks):null;
+      box.innerHTML=list.length?list.map(groupWmCard).join(''):'<div class="empty">Keine Spiele in dieser Runde.</div>'; syncOddStates();
+      renderKonk();
+    };
     if(WM_CACHE){ if(!WM_ROUND_KEYS.length) WM_ROUND_KEYS=wmOrderedRounds(WM_CACHE); render(); }
     else { proxyFetch(WM_URL).then(function(d){ var ms=(d&&d.matches)||[]; WM_CACHE=ms; WM_ROUND_KEYS=wmOrderedRounds(ms); render(); }).catch(function(){ box.innerHTML='<div class="empty">WM-Spiele konnten nicht geladen werden. Bitte später erneut.</div>'; }); }
     return;
@@ -1793,30 +1812,52 @@ function renderGroupSpiele(){
   if(mn) mn.textContent=gSelMD+'. Spieltag';
   if(lbl) lbl.textContent='Spieltag '+gSelMD+' · Saison '+olSeasonLabel();
   box.innerHTML='<div class="empty">Lädt Spiele & Analyse …</div>';
-  Promise.all([apiFetch('/getmatchdata/bl1/'+olSeason()+'/'+gSelMD).catch(function(){return null;}), ensureBLData()]).then(function(r){ var data=r[0]; if(!Array.isArray(data)||!data.length){ box.innerHTML='<div class="empty">Keine Spiele für diesen Spieltag.</div>'; return; } box.innerHTML=data.map(groupMatchCard).join(''); syncOddStates(); }).catch(function(){ box.innerHTML='<div class="empty">Spiele konnten nicht geladen werden. Bitte später erneut.</div>'; });
+  Promise.all([apiFetch('/getmatchdata/bl1/'+olSeason()+'/'+gSelMD).catch(function(){return null;}), ensureBLData()]).then(function(r){
+    var data=r[0]; if(!Array.isArray(data)||!data.length){ box.innerHTML='<div class="empty">Keine Spiele für diesen Spieltag.</div>'; return; }
+    var kicks=data.map(function(m){ var t=parseMatchTime(m.matchDateTime); return t?t.getTime():Infinity; }).filter(function(t){return isFinite(t);});
+    GD_MD_FIRST_KICKOFF=kicks.length?Math.min.apply(null,kicks):null;
+    box.innerHTML=data.map(groupMatchCard).join(''); syncOddStates();
+    renderKonk();
+  }).catch(function(){ box.innerHTML='<div class="empty">Spiele konnten nicht geladen werden. Bitte später erneut.</div>'; });
 }
 function submitSlip(){
   if(!CUR_GROUP){ toast('Erst eine Gruppe öffnen'); return; }
   if(!slip.length){ toast('Kein Tipp gewählt'); return; }
   var stake=parseFloat(document.getElementById('stakeIn').value)||0;
   if(stake<=0){ toast('Einsatz eingeben'); return; }
+  var settings=CUR_GROUP.settings||{};
+  var minStake=settings.minStake||0, maxStake=settings.maxStake||0;
+  var maxSlips=(settings.maxSlips!=null)?settings.maxSlips:1;
+  if(minStake && stake<minStake){ toast('Mindesteinsatz: '+fmt(minStake)+' Münzen'); return; }
+  if(maxStake && stake>maxStake){ toast('Höchsteinsatz: '+fmt(maxStake)+' Münzen'); return; }
   var uid=fbUid(), code=CUR_GROUP._code||CUR_GROUP.code;
   var me=(CUR_GROUP.members&&CUR_GROUP.members[uid])||{balance:0};
   if(stake>(me.balance||0)){ toast('Nicht genug Guthaben'); return; }
-  var slipId='s'+Date.now(), tot=totalOdds();
-  var rec={ id:slipId, uid:uid, name:fbUserName(), picks:slip.map(function(s){return {id:s.id,mLabel:s.mLabel,pick:s.pick,q:s.q};}), stake:stake, odds:tot, potential:Math.round(stake*tot), ts:Date.now(), status:'offen' };
-  var newBal=(me.balance||0)-stake;
-  toast('Speichere …');
-  Promise.all([ fbDB().ref('groups/'+code+'/slips/'+uid+'/'+slipId).set(rec), fbDB().ref('groups/'+code+'/members/'+uid+'/balance').set(newBal) ]).then(function(){
-    if(CUR_GROUP.members&&CUR_GROUP.members[uid]) CUR_GROUP.members[uid].balance=newBal;
-    for(var i=0;i<CUR_MEMBERS.length;i++){ if(CUR_MEMBERS[i].uid===uid) CUR_MEMBERS[i].balance=newBal; }
-    CUR_MEMBERS.sort(function(a,b){return b.balance-a.balance;});
-    var gb=document.getElementById('gdBal'); if(gb) gb.textContent=fmt(newBal)+' Münzen';
-    slip=[]; slipOpen=false; syncOddStates(); renderSlip();
-    if(typeof renderGdTable==='function') renderGdTable();
-    renderMeScheine();
-    toast('✅ Schein gespeichert · '+fmt(stake)+' Einsatz');
-  }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'unbekannt')); });
+  var md=(grpLeague()==='wm2026')?wmSelRound:gSelMD;
+  function proceed(){
+    var slipId='s'+Date.now(), tot=totalOdds();
+    var rec={ id:slipId, uid:uid, name:fbUserName(), md:md, picks:slip.map(function(s){return {id:s.id,mLabel:s.mLabel,pick:s.pick,q:s.q};}), stake:stake, odds:tot, potential:Math.round(stake*tot), ts:Date.now(), status:'offen' };
+    var newBal=(me.balance||0)-stake;
+    toast('Speichere …');
+    Promise.all([ fbDB().ref('groups/'+code+'/slips/'+uid+'/'+slipId).set(rec), fbDB().ref('groups/'+code+'/members/'+uid+'/balance').set(newBal) ]).then(function(){
+      if(CUR_GROUP.members&&CUR_GROUP.members[uid]) CUR_GROUP.members[uid].balance=newBal;
+      for(var i=0;i<CUR_MEMBERS.length;i++){ if(CUR_MEMBERS[i].uid===uid) CUR_MEMBERS[i].balance=newBal; }
+      CUR_MEMBERS.sort(function(a,b){return b.balance-a.balance;});
+      var gb=document.getElementById('gdBal'); if(gb) gb.textContent=fmt(newBal)+' Münzen';
+      slip=[]; slipOpen=false; syncOddStates(); renderSlip();
+      if(typeof renderGdTable==='function') renderGdTable();
+      renderMeScheine();
+      toast('✅ Schein gespeichert · '+fmt(stake)+' Einsatz');
+    }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'unbekannt')); });
+  }
+  if(maxSlips>0){
+    fbDB().ref('groups/'+code+'/slips/'+uid).once('value').then(function(snap){
+      var data=snap.val()||{};
+      var cnt=Object.keys(data).filter(function(k){return data[k]&&data[k].md===md;}).length;
+      if(cnt>=maxSlips){ toast('Limit erreicht: max. '+maxSlips+' Schein(e) pro Spieltag'); return; }
+      proceed();
+    }).catch(function(){ proceed(); });
+  } else { proceed(); }
 }
 function scheinTag(st){ return st==='gewonnen'?'<span class="tag" style="background:#d8f5e3;color:#0c7a37">Gewonnen</span>':st==='verloren'?'<span class="tag" style="background:#fde2e2;color:#b42318">Verloren</span>':'<span class="tag">Offen</span>'; }
 function scheinCard(s,who){
@@ -1839,6 +1880,11 @@ function renderMeScheine(){
 function renderKonk(){
   var box=document.getElementById('konkList'); if(!box) return;
   if(!CUR_GROUP){ box.innerHTML=''; return; }
+  var settings=CUR_GROUP.settings||{};
+  if((settings.oppVisibility||'afterKickoff')!=='always' && !groupMatchdayStarted()){
+    box.innerHTML='<div class="empty">Tipps der Mitspieler werden ab Anpfiff des Spieltags sichtbar.</div>';
+    return;
+  }
   var code=CUR_GROUP._code||CUR_GROUP.code, uid=fbUid();
   fbDB().ref('groups/'+code+'/slips').once('value').then(function(s){
     var data=s.val()||{}; var arr=[];
@@ -1916,7 +1962,7 @@ function betCard(o){
   html+='<div class="prob-lbl"><span style="color:var(--win)">'+olAbbr(o.h)+' '+o.pp.wH+'%</span><span style="color:var(--draw)">Unent. '+o.pp.wD+'%</span><span style="color:var(--loss)">'+olAbbr(o.a)+' '+o.pp.wA+'%</span></div>';
   html+='<div class="mx-chips"><span class="chip conf-'+o.pp.conf+'">Konfidenz: '+confLabel(o.pp.conf)+'</span><span class="chip">xG '+o.pp.xH+'–'+o.pp.xA+'</span>'+(o.detailHTML?'<span class="chip mx-more">Details ▾</span>':'')+'</div>';
   html+='</div>';
-  if(!o.fin){
+  if(!o.fin && !o.started){
     var mm={id:o.mid,h:o.h,a:o.a}, pp=o.pp;
     html+='<div class="odds">'+oddBtn(mm,'1',calcOdds(pp.wH))+oddBtn(mm,'X',calcOdds(pp.wD))+oddBtn(mm,'2',calcOdds(pp.wA))+'</div>';
     html+='<div class="more-row"><button class="more-btn" onclick="toggleExtra(\''+o.mid+'\')"><span>Weitere Wetten</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button></div>';
@@ -1927,7 +1973,7 @@ function betCard(o){
     [1.5,2.5,3.5].forEach(function(ln){ var po=poisOver(lam,ln); html+='<div class="odds" style="padding:0 14px 8px">'+oddBtn(mm,'Über '+ln,calcOdds(po*100))+oddBtn(mm,'Unter '+ln,calcOdds((1-po)*100))+'</div>'; });
     html+='<div class="extra-lbl">Beide Teams treffen</div><div class="odds" style="padding:0 14px 14px">'+oddBtn(mm,'BTTS Ja',calcOdds(btts*100))+oddBtn(mm,'BTTS Nein',calcOdds((1-btts)*100))+'</div>';
     html+='</div>';
-  } else { html+='<div class="locked"><span class="ic">🔒</span> Spiel beendet – keine Wette möglich</div>'; }
+  } else { html+='<div class="locked"><span class="ic">🔒</span> '+(o.fin?'Spiel beendet – keine Wette möglich':'Anpfiff erfolgt – keine Wette mehr möglich')+'</div>'; }
   if(o.detailHTML){ html+='<div class="mx-det" id="det-'+o.mid+'" style="display:none">'+o.detailHTML+'</div>'; }
   html+='</div>'; return html;
 }
@@ -1948,6 +1994,241 @@ widgetInner=function(id){
   }
   return _pwi(id);
 };
+</script>
+<script>
+/* ===== Anpfiff-Sperre: Spiel schließt einzeln mit seinem Anpfiff ===== */
+function parseMatchTime(dtStr){
+  if(!dtStr) return null;
+  var m=/^(\d{4})-(\d{2})/.exec(dtStr);
+  var month=m?parseInt(m[2],10):6;
+  var offset=(month>=3&&month<=10)?'+02:00':'+01:00';
+  if(dtStr.indexOf('+')<0 && dtStr.indexOf('Z')<0) dtStr+=offset;
+  var d=new Date(dtStr);
+  return isNaN(d)?null:d;
+}
+function isMatchStarted(dtStr){ var t=parseMatchTime(dtStr); return !!(t && new Date()>=t); }
+function wmDateTime(dateStr,timeStr){
+  if(!dateStr) return null;
+  var clk=/(\d{1,2}:\d{2})/.exec(timeStr||''); var hhmm=clk?clk[1]:'12:00';
+  return parseMatchTime(dateStr+'T'+hhmm+':00');
+}
+function isWmMatchStarted(m){ var t=wmDateTime(m.date,m.time); return !!(t && new Date()>=t); }
+
+/* ===== Auswertung: Scheine automatisch gewinnen/verlieren lassen + auszahlen ===== */
+function gradeTip(tip,g1,g2){
+  if(g1==null||g2==null) return null;
+  if(tip==='1') return g1>g2?'win':'loss';
+  if(tip==='X') return g1===g2?'win':'loss';
+  if(tip==='2') return g1<g2?'win':'loss';
+  if(tip==='1X') return g1>=g2?'win':'loss';
+  if(tip==='X2') return g2>=g1?'win':'loss';
+  if(tip==='12') return g1!==g2?'win':'loss';
+  var tot=g1+g2, m;
+  m=/^Über (\d+(?:\.\d+)?)$/.exec(tip); if(m) return tot>parseFloat(m[1])?'win':'loss';
+  m=/^Unter (\d+(?:\.\d+)?)$/.exec(tip); if(m) return tot<parseFloat(m[1])?'win':'loss';
+  if(tip==='BTTS Ja') return (g1>0&&g2>0)?'win':'loss';
+  if(tip==='BTTS Nein') return (g1===0||g2===0)?'win':'loss';
+  return null;
+}
+function buildResultMap(league){
+  if(league==='wm2026'){
+    var ready = WM_CACHE ? Promise.resolve(WM_CACHE) : proxyFetch(WM_URL).then(function(d){ WM_CACHE=(d&&d.matches)||[]; return WM_CACHE; }).catch(function(){ return []; });
+    return ready.then(function(ms){
+      var map={};
+      (ms||[]).forEach(function(m){
+        if(!(m.score&&m.score.ft)) return;
+        map['g'+hashStr((m.team1||'')+(m.team2||'')+(m.date||''))]={g1:m.score.ft[0],g2:m.score.ft[1]};
+      });
+      return map;
+    });
+  }
+  return apiFetch('/getmatchdata/bl1/'+olSeason()).then(function(all){
+    var map={};
+    (all||[]).forEach(function(m){
+      if(!m.matchIsFinished) return;
+      var s=olScore(m); if(!s) return;
+      map['g'+m.matchID]={g1:s.hs,g2:s.as};
+    });
+    return map;
+  }).catch(function(){ return {}; });
+}
+var _settleRunning={};
+function settleGroupSlips(group, force){
+  if(!group) return Promise.resolve(0);
+  var code=group._code||group.code; if(!code) return Promise.resolve(0);
+  var now=Date.now();
+  if(!force && _settleRunning[code] && (now-_settleRunning[code])<60000) return Promise.resolve(0);
+  _settleRunning[code]=now;
+  return buildResultMap(group.league||'bl1').then(function(resMap){
+    if(!resMap || !Object.keys(resMap).length) return 0;
+    return fbDB().ref('groups/'+code+'/slips').once('value').then(function(snap){
+      var data=snap.val()||{};
+      var updates={}, settled=0, members=group.members||{};
+      Object.keys(data).forEach(function(uid){
+        var uslips=data[uid]||{};
+        Object.keys(uslips).forEach(function(sid){
+          var s=uslips[sid];
+          if(!s || s.status!=='offen') return;
+          var picks=s.picks||[];
+          if(!picks.length) return;
+          var anyLoss=false, allDecided=true;
+          picks.forEach(function(p){
+            var r=resMap[p.id];
+            if(!r){ allDecided=false; return; }
+            var out=gradeTip(p.pick, r.g1, r.g2);
+            if(out==='loss') anyLoss=true;
+            else if(out!=='win') allDecided=false;
+          });
+          if(anyLoss){
+            updates['groups/'+code+'/slips/'+uid+'/'+sid+'/status']='verloren';
+            settled++;
+          } else if(allDecided){
+            updates['groups/'+code+'/slips/'+uid+'/'+sid+'/status']='gewonnen';
+            var cur=(members[uid]&&members[uid].balance)||0;
+            var newBal=cur+(s.potential||0);
+            members[uid]=members[uid]||{}; members[uid].balance=newBal;
+            updates['groups/'+code+'/members/'+uid+'/balance']=newBal;
+            settled++;
+          }
+        });
+      });
+      if(!Object.keys(updates).length) return 0;
+      return fbDB().ref().update(updates).then(function(){ return settled; });
+    });
+  }).catch(function(){ return 0; });
+}
+function settleAndRefreshGroup(group, cb){
+  settleGroupSlips(group, true).then(function(settled){
+    if(!settled){ if(cb) cb(0); return; }
+    var code=group._code||group.code;
+    fbLoadGroup(code).then(function(g){
+      if(!g){ if(cb) cb(settled); return; }
+      var idx=MY_GROUPS.findIndex(function(x){return x._code===code;});
+      if(idx>=0) MY_GROUPS[idx]=g; else MY_GROUPS.push(g);
+      if(CUR_GROUP && (CUR_GROUP._code||CUR_GROUP.code)===code){ CUR_GROUP=g; fillGroupDetail(g); }
+      try{ renderDash(); renderRanking(); }catch(e){}
+      if(cb) cb(settled);
+    }).catch(function(){ if(cb) cb(settled); });
+  });
+}
+
+/* ===== Admin: echte Aktionen statt Platzhalter ===== */
+function loadAdminSettings(){
+  if(!CUR_GROUP) return;
+  var s=CUR_GROUP.settings||{};
+  var g=function(id){return document.getElementById(id);};
+  if(g('aStartBal')) g('aStartBal').value=(CUR_GROUP.startBalance!=null)?CUR_GROUP.startBalance:1000;
+  if(g('aMinStake')) g('aMinStake').value=(s.minStake!=null)?s.minStake:5;
+  if(g('aMaxStake')) g('aMaxStake').value=(s.maxStake!=null)?s.maxStake:0;
+  if(g('aMaxSlips')) g('aMaxSlips').value=(s.maxSlips!=null)?s.maxSlips:1;
+  if(g('aOppVis')) g('aOppVis').value=s.oppVisibility||'afterKickoff';
+  var ib=g('inviteBox'); if(ib) ib.textContent='Code: '+(CUR_GROUP._code||CUR_GROUP.code||'?')+' 📋';
+}
+function copyInviteCode(){
+  if(!CUR_GROUP) return;
+  var code=CUR_GROUP._code||CUR_GROUP.code||'';
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(function(){ toast('Code kopiert: '+code); }).catch(function(){ toast('Code: '+code); });
+  } else toast('Code: '+code);
+}
+function adminSaveSettings(){
+  if(!CUR_GROUP) return; var code=CUR_GROUP._code||CUR_GROUP.code;
+  if(CUR_GROUP.ownerUid!==fbUid()){ toast('Nur der Ersteller kann das ändern'); return; }
+  var startBal=parseInt(document.getElementById('aStartBal').value,10); if(isNaN(startBal)||startBal<0) startBal=1000;
+  var minStake=parseFloat(document.getElementById('aMinStake').value); if(isNaN(minStake)||minStake<0) minStake=0;
+  var maxStake=parseFloat(document.getElementById('aMaxStake').value); if(isNaN(maxStake)||maxStake<0) maxStake=0;
+  var maxSlips=parseInt(document.getElementById('aMaxSlips').value,10); if(isNaN(maxSlips)||maxSlips<0) maxSlips=0;
+  var oppVis=document.getElementById('aOppVis').value||'afterKickoff';
+  var settings={minStake:minStake,maxStake:maxStake,maxSlips:maxSlips,oppVisibility:oppVis};
+  var updates={}; updates['groups/'+code+'/startBalance']=startBal; updates['groups/'+code+'/settings']=settings;
+  fbDB().ref().update(updates).then(function(){
+    CUR_GROUP.startBalance=startBal; CUR_GROUP.settings=settings;
+    toast('Einstellungen gespeichert');
+  }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
+}
+function adminAdjBalance(memUid){
+  if(!CUR_GROUP) return; var code=CUR_GROUP._code||CUR_GROUP.code;
+  var mem=CUR_MEMBERS.find(function(m){return m.uid===memUid;}); if(!mem) return;
+  var input=prompt('Neues Guthaben für '+mem.name+' (Münzen):', mem.balance);
+  if(input==null) return;
+  var nb=parseFloat(String(input).replace(',','.'));
+  if(isNaN(nb)||nb<0){ toast('Ungültiger Betrag'); return; }
+  nb=Math.round(nb);
+  fbDB().ref('groups/'+code+'/members/'+memUid+'/balance').set(nb).then(function(){
+    mem.balance=nb;
+    if(CUR_GROUP.members && CUR_GROUP.members[memUid]) CUR_GROUP.members[memUid].balance=nb;
+    if(memUid===fbUid()){ var gb=document.getElementById('gdBal'); if(gb) gb.textContent=fmt(nb)+' Münzen'; }
+    CUR_MEMBERS.sort(function(a,b){return b.balance-a.balance;});
+    renderAdminMembers(); renderGdTable();
+    toast('Guthaben angepasst');
+  }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
+}
+function adminSettleNow(){
+  if(!CUR_GROUP) return;
+  toast('Werte Spieltag aus …');
+  settleAndRefreshGroup(CUR_GROUP, function(settled){
+    toast(settled ? (settled+' Schein(e) ausgewertet') : 'Keine neuen Ergebnisse – Spiele evtl. noch nicht beendet.');
+  });
+}
+function adminNewSeason(){
+  if(!CUR_GROUP) return; var code=CUR_GROUP._code||CUR_GROUP.code;
+  if(CUR_GROUP.ownerUid!==fbUid()){ toast('Nur der Ersteller kann das'); return; }
+  if(!confirm('Neue Saison starten? Alle Guthaben werden zurückgesetzt und alle Scheine gelöscht. Das kann nicht rückgängig gemacht werden.')) return;
+  var sb=CUR_GROUP.startBalance||1000;
+  var members=CUR_GROUP.members||{}; var updates={};
+  Object.keys(members).forEach(function(uid){ updates['groups/'+code+'/members/'+uid+'/balance']=sb; });
+  updates['groups/'+code+'/slips']=null;
+  fbDB().ref().update(updates).then(function(){ toast('Neue Saison gestartet'); return fbLoadGroup(code); }).then(function(g){
+    if(!g) return;
+    var idx=MY_GROUPS.findIndex(function(x){return x._code===code;}); if(idx>=0) MY_GROUPS[idx]=g;
+    CUR_GROUP=g; fillGroupDetail(g);
+  }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
+}
+function adminDeleteGroup(){
+  if(!CUR_GROUP) return; var code=CUR_GROUP._code||CUR_GROUP.code;
+  if(CUR_GROUP.ownerUid!==fbUid()){ toast('Nur der Ersteller kann das'); return; }
+  if(!confirm('Gruppe "'+(CUR_GROUP.name||code)+'" wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.')) return;
+  var members=CUR_GROUP.members||{}; var updates={};
+  Object.keys(members).forEach(function(uid){ updates['users/'+uid+'/groups/'+code]=null; });
+  updates['groups/'+code]=null;
+  fbDB().ref().update(updates).then(function(){
+    MY_GROUPS=MY_GROUPS.filter(function(x){return (x._code||x.code)!==code;});
+    toast('Gruppe gelöscht');
+    closeGroup(); renderGroups();
+  }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
+}
+
+/* ===== Konto löschen ===== */
+function accountDelete(){
+  var user=fbAuth.currentUser; if(!user) return;
+  if(!confirm('Konto wirklich endgültig löschen? Alle deine Gruppenmitgliedschaften und Daten werden entfernt. Das kann nicht rückgängig gemacht werden.')) return;
+  var uid=user.uid;
+  fbDB().ref('users/'+uid+'/groups').once('value').then(function(snap){
+    var codes=Object.keys(snap.val()||{});
+    return Promise.all(codes.map(function(code){
+      return fbDB().ref('groups/'+code).once('value').then(function(s){
+        var g=s.val(); if(!g) return null;
+        if(g.ownerUid===uid){
+          var updates={}; Object.keys(g.members||{}).forEach(function(m){ updates['users/'+m+'/groups/'+code]=null; });
+          updates['groups/'+code]=null;
+          return fbDB().ref().update(updates);
+        }
+        return fbDB().ref('groups/'+code+'/members/'+uid).remove().then(function(){ return fbDB().ref('users/'+uid+'/groups/'+code).remove(); });
+      });
+    }));
+  }).then(function(){
+    return user.delete();
+  }).then(function(){
+    toast('Konto gelöscht');
+  }).catch(function(e){
+    if(e && e.code==='auth/requires-recent-login'){
+      toast('Bitte erneut anmelden und danach direkt löschen.');
+      fbAuth.signOut();
+    } else {
+      toast('Fehler: '+((e&&e.message)||'unbekannt'));
+    }
+  });
+}
 </script>
 </body>
 </html>
