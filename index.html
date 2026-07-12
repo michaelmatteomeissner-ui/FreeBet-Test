@@ -650,7 +650,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 15</div>
+        <div class="hdr-sub2">Tippspiel · Build 16</div>
       </div>
     </div>
   </header>
@@ -1151,6 +1151,13 @@ function gdTab(w,btn){
   document.getElementById('gdScheine').style.display=w==='scheine'?'':'none';
   document.getElementById('gdKonk').style.display=w==='konk'?'':'none';
   document.getElementById('gdTabelle').style.display=w==='tabelle'?'':'none';
+  /* Beim Öffnen von "Scheine"/"Gegner": frisch laden + im Hintergrund auswerten */
+  if(w==='scheine'){
+    if(typeof renderMeScheine==='function') renderMeScheine();
+    if(CUR_GROUP && typeof settleAndRefreshGroup==='function') settleAndRefreshGroup(CUR_GROUP, null, false);
+  }
+  if(w==='konk' && typeof renderKonk==='function') renderKonk();
+  if(w==='tabelle' && typeof renderGdTable==='function') renderGdTable();
 }
 function renderGdTable(){
   document.getElementById('gdTblRows').innerHTML=GRP_MEMBERS.map((m,i)=>{
@@ -2054,7 +2061,7 @@ function groupMatchCard(match){
   return betCard({ mid:'g'+(match.matchID||hashStr(h+a+(match.matchDateTime||''))), when:olDateTime(match.matchDateTime), fin:match.matchIsFinished, started:started, hs:sc?sc.hs:null, as:sc?sc.as:null, hCrest:crestHTML(h), aCrest:crestHTML(a), h:h, a:a, pp:pp, detailHTML:matchDetailHTML(match,pp) });
 }
 function groupWmCard(match){
-  var h=match.team1, a=match.team2, pp=calcWmProbs(h,a);
+  var h=wmTName(match.team1), a=wmTName(match.team2), pp=calcWmProbs(h,a);
   var fin=!!(match.score&&match.score.ft), hs=fin?match.score.ft[0]:null, as=fin?match.score.ft[1]:null;
   var started=!fin && isWmMatchStarted(match);
   var when=match.date?(wmDate(match.date)+(match.time?(' · '+String(match.time).replace(/\s*UTC.*/i,'').trim()+' Uhr'):'')):'';
@@ -2155,11 +2162,35 @@ function submitSlip(){
   } else { proceed(); }
 }
 function scheinTag(st){ return st==='gewonnen'?'<span class="tag" style="background:#d8f5e3;color:#0c7a37">Gewonnen</span>':st==='verloren'?'<span class="tag" style="background:#fde2e2;color:#b42318">Verloren</span>':'<span class="tag">Offen</span>'; }
+/* Live-Status eines Scheins aus bereits bekannten Ergebnissen ableiten (auch wenn
+   Firebase noch "offen" zeigt, weil die Auswertung gerade erst nachgeladen wird). */
+function slipLiveStatus(s){
+  if(s.status&&s.status!=='offen') return s.status;
+  var resMap=LAST_RESMAP[(CUR_GROUP&&CUR_GROUP.league)||'bl1']||{};
+  var picks=s.picks||[]; if(!picks.length) return 'offen';
+  var anyLoss=false, allWin=true;
+  picks.forEach(function(p){
+    var r=resMap[p.id];
+    if(!r){ allWin=false; return; }
+    var out=gradeTip(p.pick,r.g1,r.g2);
+    if(out==='loss') anyLoss=true;
+    else if(out!=='win') allWin=false;
+  });
+  if(anyLoss) return 'verloren';
+  if(allWin) return 'gewonnen';
+  return 'offen';
+}
 function scheinCard(s,who){
-  var picks=(s.picks||[]).map(function(pp){ return '<div class="slip-pick"><div class="info"><div class="mt">'+esc(pp.mLabel)+'</div><div class="pk">'+tipName(pp.pick)+'</div></div><div class="q">'+Number(pp.q).toFixed(2)+'</div></div>'; }).join('');
+  var resMap=LAST_RESMAP[(CUR_GROUP&&CUR_GROUP.league)||'bl1']||{};
+  var picks=(s.picks||[]).map(function(pp){
+    var r=resMap[pp.id], mark='', col='var(--ink-2)';
+    if(r){ var out=gradeTip(pp.pick,r.g1,r.g2); if(out==='win'){ mark='✓ '; col='var(--win)'; } else if(out==='loss'){ mark='✗ '; col='var(--loss)'; } }
+    return '<div class="slip-pick"><div class="info"><div class="mt">'+esc(pp.mLabel)+(r?(' · '+r.g1+':'+r.g2):'')+'</div><div class="pk" style="color:'+col+'">'+mark+tipName(pp.pick)+'</div></div><div class="q">'+Number(pp.q).toFixed(2)+'</div></div>';
+  }).join('');
+  var st=slipLiveStatus(s);
   var head='<b>'+((s.picks&&s.picks.length>1)?(s.picks.length+'er Kombi'):'Einzelwette')+'</b>';
   if(who) head='<b>'+esc(who)+'</b> · '+((s.picks&&s.picks.length>1)?(s.picks.length+'er Kombi'):'Einzel');
-  return '<div class="card" style="padding:12px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+head+scheinTag(s.status)+'</div>'+picks+'<div style="display:flex;justify-content:space-between;margin-top:9px;font-size:12.5px;color:var(--ink-2)"><span>Einsatz <b style="color:var(--ink)">'+fmt(s.stake)+'</b></span><span>Quote <b style="color:var(--ink)">'+Number(s.odds).toFixed(2)+'</b></span><span>Mögl. <b style="color:var(--ink)">'+fmt(s.potential)+'</b></span></div></div>';
+  return '<div class="card" style="padding:12px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+head+scheinTag(st)+'</div>'+picks+'<div style="display:flex;justify-content:space-between;margin-top:9px;font-size:12.5px;color:var(--ink-2)"><span>Einsatz <b style="color:var(--ink)">'+fmt(s.stake)+'</b></span><span>Quote <b style="color:var(--ink)">'+Number(s.odds).toFixed(2)+'</b></span><span>Mögl. <b style="color:var(--ink)">'+fmt(s.potential)+'</b></span></div></div>';
 }
 function renderMeScheine(){
   var box=document.getElementById('meScheineList'); if(!box) return;
@@ -2169,11 +2200,12 @@ function renderMeScheine(){
   function show(data){
     var arr=Object.keys(data).map(function(k){return data[k];}).sort(function(a,b){return (b.ts||0)-(a.ts||0);});
     arr=arr.filter(function(x){
+      var st=slipLiveStatus(x);
       if(scheineFilter==='alle') return true;
-      if(scheineFilter==='offen') return x.status==='offen';
-      if(scheineFilter==='gewonnen') return x.status==='gewonnen';
-      if(scheineFilter==='verloren') return x.status==='verloren';
-      return x.status&&x.status!=='offen';
+      if(scheineFilter==='offen') return st==='offen';
+      if(scheineFilter==='gewonnen') return st==='gewonnen';
+      if(scheineFilter==='verloren') return st==='verloren';
+      return st!=='offen';
     });
     box.innerHTML=arr.length?arr.map(function(x){return scheinCard(x);}).join(''):'<div class="empty">Noch keine Scheine für diesen Filter.</div>';
   }
@@ -2341,25 +2373,30 @@ function gradeTip(tip,g1,g2){
   if(tip==='BTTS Nein') return (g1===0||g2===0)?'win':'loss';
   return null;
 }
+function wmTName(t){ if(typeof t==='string') return t; if(t&&t.name) return t.name; if(t&&t.teamName) return t.teamName; return ''; }
+var LAST_RESMAP={};   // league -> {mid:{g1,g2}} zuletzt geladene Ergebnisse (für Live-Anzeige)
 function buildResultMap(league){
   if(league==='wm2026'){
     var ready = WM_CACHE ? Promise.resolve(WM_CACHE) : proxyFetch(WM_URL).then(function(d){ WM_CACHE=(d&&d.matches)||[]; return WM_CACHE; }).catch(function(){ return []; });
     return ready.then(function(ms){
       var map={};
       (ms||[]).forEach(function(m){
-        if(!(m.score&&m.score.ft)) return;
-        map['g'+hashStr((m.team1||'')+(m.team2||'')+(m.date||''))]={g1:m.score.ft[0],g2:m.score.ft[1]};
+        if(!(m.score&&m.score.ft&&Array.isArray(m.score.ft)&&m.score.ft.length===2)) return;
+        map['g'+hashStr(wmTName(m.team1)+wmTName(m.team2)+(m.date||''))]={g1:m.score.ft[0],g2:m.score.ft[1]};
       });
+      LAST_RESMAP['wm2026']=map;
       return map;
     });
   }
-  return apiFetch('/getmatchdata/'+olShortcut(league)+'/'+olSeason()).then(function(all){
+  var sc=olShortcut(league);
+  return apiFetch('/getmatchdata/'+sc+'/'+olSeason()).then(function(all){
     var map={};
     (all||[]).forEach(function(m){
       if(!m.matchIsFinished) return;
       var s=olScore(m); if(!s) return;
       map['g'+m.matchID]={g1:s.hs,g2:s.as};
     });
+    LAST_RESMAP[league]=map;
     return map;
   }).catch(function(){ return {}; });
 }
@@ -2370,13 +2407,23 @@ function settleGroupSlips(group, force){
   var now=Date.now();
   if(!force && _settleRunning[code] && (now-_settleRunning[code])<60000) return Promise.resolve(0);
   _settleRunning[code]=now;
+  var myUid=fbUid();
+  var isOwner=(group.ownerUid===myUid);
   return buildResultMap(group.league||'bl1').then(function(resMap){
     if(!resMap || !Object.keys(resMap).length) return 0;
     return fbDB().ref('groups/'+code+'/slips').once('value').then(function(snap){
       var data=snap.val()||{};
-      var updates={}, settled=0, members=group.members||{};
+      var members=group.members||{};
+      /* Auswertung pro Mitglied: eigene Scheine immer schreibbar; fremde nur als
+         Admin. Jede Mitglieds-Schreibung läuft separat mit eigenem catch, damit
+         eine von den Sicherheitsregeln abgelehnte Fremdschreibung NIE die eigene
+         Auswertung blockiert (Root-update() wäre atomar → alles oder nichts). */
+      var writes=[], settledTotal=0;
       Object.keys(data).forEach(function(uid){
+        /* Ohne Admin-Rechte nur die eigenen Scheine auswerten (Firebase-Regeln) */
+        if(uid!==myUid && !isOwner) return;
         var uslips=data[uid]||{};
+        var upd={}, memNewBal=null, settled=0;
         Object.keys(uslips).forEach(function(sid){
           var s=uslips[sid];
           if(!s || s.status!=='offen') return;
@@ -2391,33 +2438,46 @@ function settleGroupSlips(group, force){
             else if(out!=='win') allDecided=false;
           });
           if(anyLoss){
-            updates['groups/'+code+'/slips/'+uid+'/'+sid+'/status']='verloren';
+            upd['slips/'+uid+'/'+sid+'/status']='verloren';
+            upd['slips/'+uid+'/'+sid+'/settledAt']=now;
             settled++;
           } else if(allDecided){
-            updates['groups/'+code+'/slips/'+uid+'/'+sid+'/status']='gewonnen';
-            var cur=(members[uid]&&members[uid].balance)||0;
-            var newBal=cur+(s.potential||0);
-            members[uid]=members[uid]||{}; members[uid].balance=newBal;
-            updates['groups/'+code+'/members/'+uid+'/balance']=newBal;
+            upd['slips/'+uid+'/'+sid+'/status']='gewonnen';
+            upd['slips/'+uid+'/'+sid+'/settledAt']=now;
+            var base=(memNewBal!=null)?memNewBal:((members[uid]&&members[uid].balance)||0);
+            memNewBal=base+(s.potential||0);
             settled++;
           }
         });
+        if(memNewBal!=null){ upd['members/'+uid+'/balance']=memNewBal; }
+        if(Object.keys(upd).length){
+          settledTotal+=settled;
+          if(members[uid]&&memNewBal!=null) members[uid].balance=memNewBal;
+          writes.push(fbDB().ref('groups/'+code).update(upd).then(function(){return settled;}).catch(function(){return 0;}));
+        }
       });
-      if(!Object.keys(updates).length) return 0;
-      return fbDB().ref().update(updates).then(function(){ return settled; });
+      if(!writes.length) return 0;
+      return Promise.all(writes).then(function(counts){
+        return counts.reduce(function(a,b){return a+b;},0);
+      });
     });
   }).catch(function(){ return 0; });
 }
-function settleAndRefreshGroup(group, cb){
-  settleGroupSlips(group, true).then(function(settled){
-    if(!settled){ if(cb) cb(0); return; }
+function settleAndRefreshGroup(group, cb, force){
+  settleGroupSlips(group, force!==false).then(function(settled){
     var code=group._code||group.code;
+    if(!settled){
+      /* Auch ohne neue Auswertung: frische Ergebnis-Map ist geladen → Scheine mit
+         Live-Kennzeichnung neu rendern (falls Gruppe offen). */
+      if(CUR_GROUP && (CUR_GROUP._code||CUR_GROUP.code)===code){ try{ renderMeScheine(); renderKonk(); }catch(e){} }
+      if(cb) cb(0); return;
+    }
     fbLoadGroup(code).then(function(g){
       if(!g){ if(cb) cb(settled); return; }
       var idx=MY_GROUPS.findIndex(function(x){return x._code===code;});
       if(idx>=0) MY_GROUPS[idx]=g; else MY_GROUPS.push(g);
       if(CUR_GROUP && (CUR_GROUP._code||CUR_GROUP.code)===code){ CUR_GROUP=g; fillGroupDetail(g); }
-      try{ renderDash(); renderRanking(); }catch(e){}
+      try{ renderDash(); renderRanking(); loadMySlipsAll(); }catch(e){}
       if(cb) cb(settled);
     }).catch(function(){ if(cb) cb(settled); });
   });
