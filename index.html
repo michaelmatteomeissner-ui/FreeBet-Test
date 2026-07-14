@@ -15,7 +15,51 @@
   --ink:#0f1729; --ink-2:#5b6577; --ink-3:#9aa3b4;
   --win:#16a34a; --loss:#dc2626; --open:#d9870b; --gold:#d9a300; --tint:#eef3fb;
   --r:18px; --shadow:0 1px 2px rgba(15,23,41,.04),0 6px 16px rgba(15,23,41,.05);
+  --draw:#d9870b; --field:#fbfcfe; --soft:#f4f6fa;
 }
+/* ===== Dark Theme ===== */
+html[data-theme="dark"]{
+  --navy:#6ea0ff; --navy-d:#4c82e6;
+  --hero:#101a30;
+  --bg:#0f1420; --card:#171d29; --line:#2a3242; --line-2:#212936;
+  --ink:#eef1f6; --ink-2:#aab4c4; --ink-3:#6d778a; --tint:#1a2740;
+  --field:#10151f; --soft:#1b2230;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 16px rgba(0,0,0,.4);
+}
+html[data-theme="dark"] body{background:#05070c}
+html[data-theme="dark"] .app{box-shadow:0 24px 70px rgba(0,0,0,.6)}
+html[data-theme="dark"] .nav,
+html[data-theme="dark"] .slip-inner,
+html[data-theme="dark"] .lg-switch button,
+html[data-theme="dark"] .md-pick,
+html[data-theme="dark"] .odd,
+html[data-theme="dark"] .more-btn,
+html[data-theme="dark"] .pill-tabs button,
+html[data-theme="dark"] .filter-row button,
+html[data-theme="dark"] .emoji-pick button,
+html[data-theme="dark"] .md-chip,
+html[data-theme="dark"] .md-cell,
+html[data-theme="dark"] .btn-ghost,
+html[data-theme="dark"] .admin-inp,
+html[data-theme="dark"] .admin-sec,
+html[data-theme="dark"] .mem-act button,
+html[data-theme="dark"] .stake-in,
+html[data-theme="dark"] .appear button,
+html[data-theme="dark"] .quick-stakes button{background:var(--card);color:var(--ink)}
+html[data-theme="dark"] .appear button.active,
+html[data-theme="dark"] .lg-switch button.active{background:var(--tint);color:var(--navy)}
+html[data-theme="dark"] .seg{background:#0f1522}
+html[data-theme="dark"] .seg button.active{background:var(--card)}
+html[data-theme="dark"] .code-in,
+html[data-theme="dark"] .field input,
+html[data-theme="dark"] .field select,
+html[data-theme="dark"] .ag-inp{background:var(--field);color:var(--ink)}
+html[data-theme="dark"] .locked,
+html[data-theme="dark"] .info-bar,
+html[data-theme="dark"] .bal-cell,
+html[data-theme="dark"] .sc-foot{background:var(--soft)}
+html[data-theme="dark"] #authGate{background:var(--bg)}
+html[data-theme="dark"] .toggle.off{background:#3a4252}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#d4dae6;color:var(--ink);
@@ -308,6 +352,19 @@ select.admin-inp{width:155px}
 .info-bar{display:flex;gap:9px;align-items:flex-start;background:#eef3fb;border:1px solid #d8e3f5;border-radius:12px;padding:11px 13px;font-size:12.5px;color:#2a4a83;margin-bottom:12px;line-height:1.45}
 .empty{text-align:center;color:var(--ink-3);font-size:13px;padding:26px 12px}
 /* slip card */
+/* einklappbare abgegebene Scheine */
+.schein{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+.schein-head{padding:12px 14px;cursor:pointer}
+.schein-top{display:flex;align-items:center;gap:8px}
+.schein-type{font-weight:800;font-size:14px}
+.schein-who{font-weight:800;font-size:14px}
+.schein-chev{margin-left:auto;color:var(--ink-3);font-weight:800;font-size:20px;line-height:1;transition:transform .2s}
+.schein.open .schein-chev{transform:rotate(90deg)}
+.schein-figs{display:flex;gap:14px;margin-top:9px;font-size:12.5px;color:var(--ink-2);flex-wrap:wrap}
+.schein-figs b{color:var(--ink);font-weight:800}
+.schein-body{display:none;border-top:1px solid var(--line-2)}
+.schein.open .schein-body{display:block}
+.schein-body .slip-pick:last-child{border-bottom:none}
 .slip-card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
 .sc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line-2)}
 .sc-l{display:flex;align-items:center;gap:8px;min-width:0}
@@ -350,7 +407,7 @@ select.admin-inp{width:155px}
 /* nav */
 .nav{flex-shrink:0;height:66px;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);position:relative;z-index:40}
 .nav button{flex:1;background:none;border:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-3);cursor:pointer;padding-top:8px}
-.nav button svg{width:22px;height:22px}.nav button span{font-size:9.5px;font-weight:600;letter-spacing:-.2px}.nav button.active{color:var(--navy)}
+.nav button svg{width:24px;height:24px;flex-shrink:0;display:block}.nav button span{font-size:10.5px;font-weight:600;letter-spacing:-.2px}.nav button.active{color:var(--navy)}
 
 /* toast */
 .toast{position:absolute;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:60;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:88%;text-align:center}
@@ -383,13 +440,14 @@ select.admin-inp{width:155px}
 </style>
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyCckalatT5_Gz8LbHcamAeIvxalyJD9Srs",
-  authDomain: "freebet-test.firebaseapp.com",
-  databaseURL: "https://freebet-test-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "freebet-test",
-  storageBucket: "freebet-test.firebasestorage.app",
-  messagingSenderId: "854035763129",
-  appId: "1:854035763129:web:ac9b130744283b51553068"
+  apiKey: "AIzaSyCvMkNWd6pNIaaGIuNhDP0ZI7tN2ZCt3Z0",
+  authDomain: "freebet-1.firebaseapp.com",
+  databaseURL: "https://freebet-1-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "freebet-1",
+  storageBucket: "freebet-1.firebasestorage.app",
+  messagingSenderId: "77961459240",
+  appId: "1:77961459240:web:f15d63796da86110f2e71d",
+  measurementId: "G-9WBDYEN5H7"
 };
 firebase.initializeApp(firebaseConfig);
 var fbAuth = firebase.auth(); fbAuth.languageCode = 'de';
@@ -638,7 +696,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
       <div class="ag-foot" onclick="authLogout()">Abmelden</div>
     </div>
   </div>
-  <div class="ag-test">TEST-DB · freebet-test</div>
+  <div class="ag-test">freebet-1</div>
 </div>
 
   <!-- HEADER -->
@@ -650,7 +708,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 16</div>
+        <div class="hdr-sub2">Tippspiel · Build 19</div>
       </div>
     </div>
   </header>
@@ -853,12 +911,16 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
           <div><div class="nm" id="profName">Spieler</div><div class="hd" id="profEmail"></div><div class="ms" id="profMeta"></div></div>
         </div>
         <div class="card"><div class="card-h"><h2>Erscheinungsbild</h2></div>
-          <div class="appear"><button class="active"><span class="e">☀️</span>Hell</button><button><span class="e">🌙</span>Dunkel</button><button><span class="e">⚙️</span>System</button></div>
+          <div class="appear" id="appearPick">
+            <button data-theme="light" onclick="setTheme('light')"><span class="e">☀️</span>Hell</button>
+            <button data-theme="dark" onclick="setTheme('dark')"><span class="e">🌙</span>Dunkel</button>
+            <button data-theme="system" onclick="setTheme('system')"><span class="e">⚙️</span>System</button>
+          </div>
         </div>
         <div class="card">
-          <div class="set-row"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span><span class="lb">Benachrichtigungen</span><span class="toggle" onclick="this.classList.toggle('off')"></span></div>
-          <div class="set-row" onclick="toast('Profil bearbeiten')"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="lb">Profil bearbeiten</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
-          <div class="set-row" onclick="toast('Sprache: Deutsch')"><span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg></span><span class="lb">Sprache</span><span class="vl">Deutsch</span><span class="ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+          <div class="set-row"><span class="set-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span><span class="lb">Benachrichtigungen</span><span class="toggle off" id="notifToggle" onclick="toggleNotifications()"></span></div>
+          <div class="set-row" onclick="editProfile()"><span class="set-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="lb">Profil bearbeiten</span><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
+          <div class="set-row" onclick="changePassword()"><span class="set-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><span class="lb">Passwort ändern</span><span class="ch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div>
         </div>
         <div class="card"><div class="card-h"><h2>Hilfe &amp; Support</h2></div><div id="faq"></div></div>
         <div class="card">
@@ -922,19 +984,19 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 
   <!-- BOTTOM NAV -->
   <nav class="nav" id="nav">
-    <button class="active" data-t="start" onclick="go('start',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Start</span></button>
-    <button data-t="tabelle" onclick="go('tabelle',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h6v14H4z"/><path d="M14 5h6v14h-6z"/><line x1="12" y1="3" x2="12" y2="21"/></svg><span>Matchup</span></button>
-    <button data-t="gruppen" onclick="go('gruppen',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Gruppen</span></button>
-    <button data-t="ranking" onclick="go('ranking',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Ranking</span></button>
-    <button data-t="profil" onclick="go('profil',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg><span>Profil</span></button>
+    <button class="active" data-t="start" onclick="go('start',this)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Start</span></button>
+    <button data-t="tabelle" onclick="go('tabelle',this)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h6v14H4z"/><path d="M14 5h6v14h-6z"/><line x1="12" y1="3" x2="12" y2="21"/></svg><span>Matchup</span></button>
+    <button data-t="gruppen" onclick="go('gruppen',this)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Gruppen</span></button>
+    <button data-t="ranking" onclick="go('ranking',this)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Ranking</span></button>
+    <button data-t="profil" onclick="go('profil',this)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg><span>Profil</span></button>
   </nav>
 </div>
 
 <script>
 /* ====== DATA ====== */
 const LEAGUES=[
-  {id:'bl1',em:'<svg viewBox="0 0 5 3" width="16" height="11" style="border-radius:2px;vertical-align:middle"><rect width="5" height="1" fill="#111"/><rect width="5" height="1" y="1" fill="#D00"/><rect width="5" height="1" y="2" fill="#FFCE00"/></svg>',name:'Bundesliga'},
-  {id:'bl2',em:'2️⃣',name:'2. Bundesliga'},
+  {id:'bl1',em:'',name:'Bundesliga'},
+  {id:'bl2',em:'',name:'2. Bundesliga'},
   {id:'wm2026',em:'🌍',name:'WM 2026'},
   /* {id:'multi',em:'🌐',name:'Alle Events'},  // vorerst auskommentiert */
 ];
@@ -1007,7 +1069,7 @@ const fmt=n=>n.toLocaleString('de-DE',{maximumFractionDigits:0});
 
 /* ====== LEAGUE SWITCHER (im Matchup-Tab) ====== */
 function renderLeaguePills(){
-  document.getElementById('lgSwitch').innerHTML=LEAGUES.map(l=>`<button class="${l.id===activeLeague?'active':''}" onclick="selectLeague('${l.id}')"><span class="em">${l.em}</span>${l.name}</button>`).join('');
+  document.getElementById('lgSwitch').innerHTML=LEAGUES.map(l=>`<button class="${l.id===activeLeague?'active':''}" onclick="selectLeague('${l.id}')">${l.em?`<span class="em">${l.em}</span>`:''}${l.name}</button>`).join('');
 }
 function selectLeague(id){
   activeLeague=id; const l=LEAGUES.find(x=>x.id===id);
@@ -1386,8 +1448,21 @@ function proxyFetch(base){
   }
   return tryNext();
 }
-function olSeason(){ var d = new Date(); var y = d.getFullYear(); return (d.getMonth()+1 >= 8) ? y : y-1; }
+var OL_SEASON_RESOLVED=null;   // datengetrieben aufgelöste aktive Saison (bl1/bl2 teilen dieselbe)
+function olSeason(){ if(OL_SEASON_RESOLVED!=null) return OL_SEASON_RESOLVED; var d = new Date(); var y = d.getFullYear(); return (d.getMonth()+1 >= 8) ? y : y-1; }
 function olSeasonLabel(){ var s=olSeason(); return String(s).slice(2)+'/'+String(s+1).slice(2); }
+/* Aktive Saison bestimmen: In der zweiten Jahreshälfte (Sommerpause+) prüfen, ob
+   die neue Saison (Kalenderjahr) bereits Spielpläne hat – dann diese anzeigen. */
+function resolveActiveSeason(){
+  var d=new Date(), y=d.getFullYear(), m=d.getMonth()+1;
+  var running=(m>=8)?y:y-1;
+  function done(s){ OL_SEASON_RESOLVED=s; OL_CUR_MD={}; try{ if(typeof OL_STORE!=='undefined') OL_STORE={}; }catch(e){} try{ renderTable(); renderMatchupFix(); olInitCurrentMatchday('bl1'); }catch(e){} }
+  if(m>=6 && running<y){
+    apiFetch('/getmatchdata/bl1/'+y+'/1').then(function(d1){
+      done((Array.isArray(d1)&&d1.length)?y:running);
+    }).catch(function(){ done(running); });
+  } else { done(running); }
+}
 function olAbbr(name){
   if(!name) return '?';
   var clean = name.replace(/^(1\.|FC|SC|SV|TSG|VfL|VfB|Bayer|Borussia|SpVgg)\s+/i,'').trim() || name;
@@ -1488,21 +1563,32 @@ function renderMatchupFix(){
 function renderTable(){ loadTable(); }
 var BL_CUR_MD=null;
 var OL_CUR_MD={};
+function olApplyMd(sc, md){
+  if(!md) return;
+  md = Math.max(1, Math.min(34, md));
+  OL_CUR_MD[sc]=md;
+  if(sc==='bl1') BL_CUR_MD = md;
+  if (olShortcut(activeLeague)===sc && activeLeague!=='wm2026'){
+    mSelMD = md;
+    var el = document.getElementById('mMdNum'); if (el) el.textContent = mSelMD + '. Spieltag';
+    loadMatchupMatches();
+  }
+}
+/* Aktuellen/nächsten Spieltag robust aus den Saisondaten bestimmen:
+   erster Spieltag, der noch nicht komplett beendete Spiele hat. */
 function olInitCurrentMatchday(sc){
   sc = sc || 'bl1';
-  apiFetch('/getcurrentgroup/'+sc).then(function(g){
-    var md = g && g.groupOrderID ? g.groupOrderID : null;
-    if (md){
-      md = Math.max(1, Math.min(34, md));
-      OL_CUR_MD[sc]=md;
-      if(sc==='bl1') BL_CUR_MD = md;
-      if (olShortcut(activeLeague)===sc && activeLeague!=='wm2026'){
-        mSelMD = md;
-        var el = document.getElementById('mMdNum'); if (el) el.textContent = mSelMD + '. Spieltag';
-        loadMatchupMatches();
-      }
-    }
-  }).catch(function(){});
+  apiFetch('/getmatchdata/'+sc+'/'+olSeason()).then(function(all){
+    if(!Array.isArray(all) || !all.length){ throw new Error('leer'); }
+    var byMd={};
+    all.forEach(function(m){ var md=(m.group&&m.group.groupOrderID)||m.groupOrderID; if(md==null) return; (byMd[md]=byMd[md]||[]).push(m); });
+    var mds=Object.keys(byMd).map(Number).sort(function(a,b){return a-b;});
+    var cur=mds.length?mds[mds.length-1]:1;
+    for(var i=0;i<mds.length;i++){ if(byMd[mds[i]].some(function(x){return !x.matchIsFinished;})){ cur=mds[i]; break; } }
+    olApplyMd(sc, cur);
+  }).catch(function(){
+    apiFetch('/getcurrentgroup/'+sc).then(function(g){ olApplyMd(sc, g&&g.groupOrderID); }).catch(function(){});
+  });
 }
 function olCurMd(sc){ return OL_CUR_MD[sc]||BL_CUR_MD||CURRENT_MD; }
 /* echte Daten laden (überschreibt die Beispiel-Renderer von oben) */
@@ -1605,7 +1691,7 @@ selectLeague=function(id){
   renderMatchupFix();
 };
 
-renderTable(); renderMatchupFix(); olInitCurrentMatchday('bl1');
+renderTable(); renderMatchupFix(); resolveActiveSeason();
 </script>
 <script>
 /* ===== WM 2026 – Spieltag-Filter (Begegnungen) + Tabelle wie Original (neues Design) ===== */
@@ -1810,10 +1896,19 @@ function fillGroupDetail(g){
     var sc=olShortcut(g.league);
     gSelMD=olCurMd(sc);
     if(!OL_CUR_MD[sc]){
-      apiFetch('/getcurrentgroup/'+sc).then(function(gg){
-        var md=gg&&gg.groupOrderID?Math.max(1,Math.min(34,gg.groupOrderID)):null;
-        if(md){ OL_CUR_MD[sc]=md; if(sc==='bl1') BL_CUR_MD=md; if(CUR_GROUP===g){ gSelMD=md; renderGroupSpiele(); } }
-      }).catch(function(){});
+      apiFetch('/getmatchdata/'+sc+'/'+olSeason()).then(function(all){
+        if(!Array.isArray(all)||!all.length) throw new Error('leer');
+        var byMd={}; all.forEach(function(m){ var md=(m.group&&m.group.groupOrderID)||m.groupOrderID; if(md==null) return; (byMd[md]=byMd[md]||[]).push(m); });
+        var mds=Object.keys(byMd).map(Number).sort(function(a,b){return a-b;});
+        var cur=mds.length?mds[mds.length-1]:1;
+        for(var i=0;i<mds.length;i++){ if(byMd[mds[i]].some(function(x){return !x.matchIsFinished;})){ cur=mds[i]; break; } }
+        OL_CUR_MD[sc]=cur; if(sc==='bl1') BL_CUR_MD=cur; if(CUR_GROUP===g){ gSelMD=cur; renderGroupSpiele(); }
+      }).catch(function(){
+        apiFetch('/getcurrentgroup/'+sc).then(function(gg){
+          var md=gg&&gg.groupOrderID?Math.max(1,Math.min(34,gg.groupOrderID)):null;
+          if(md){ OL_CUR_MD[sc]=md; if(sc==='bl1') BL_CUR_MD=md; if(CUR_GROUP===g){ gSelMD=md; renderGroupSpiele(); } }
+        }).catch(function(){});
+      });
     }
   }
   renderGroupSpiele(); renderGdTable(); renderMeScheine(); renderKonk(); renderAdminMembers();
@@ -2180,6 +2275,12 @@ function slipLiveStatus(s){
   if(allWin) return 'gewonnen';
   return 'offen';
 }
+var SCHEIN_OPEN={};
+function toggleSchein(cid){
+  var e=document.getElementById('schein-'+cid); if(!e) return;
+  var open=e.classList.toggle('open');
+  SCHEIN_OPEN[cid]=open;
+}
 function scheinCard(s,who){
   var resMap=LAST_RESMAP[(CUR_GROUP&&CUR_GROUP.league)||'bl1']||{};
   var picks=(s.picks||[]).map(function(pp){
@@ -2188,9 +2289,20 @@ function scheinCard(s,who){
     return '<div class="slip-pick"><div class="info"><div class="mt">'+esc(pp.mLabel)+(r?(' · '+r.g1+':'+r.g2):'')+'</div><div class="pk" style="color:'+col+'">'+mark+tipName(pp.pick)+'</div></div><div class="q">'+Number(pp.q).toFixed(2)+'</div></div>';
   }).join('');
   var st=slipLiveStatus(s);
-  var head='<b>'+((s.picks&&s.picks.length>1)?(s.picks.length+'er Kombi'):'Einzelwette')+'</b>';
-  if(who) head='<b>'+esc(who)+'</b> · '+((s.picks&&s.picks.length>1)?(s.picks.length+'er Kombi'):'Einzel');
-  return '<div class="card" style="padding:12px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+head+scheinTag(st)+'</div>'+picks+'<div style="display:flex;justify-content:space-between;margin-top:9px;font-size:12.5px;color:var(--ink-2)"><span>Einsatz <b style="color:var(--ink)">'+fmt(s.stake)+'</b></span><span>Quote <b style="color:var(--ink)">'+Number(s.odds).toFixed(2)+'</b></span><span>Mögl. <b style="color:var(--ink)">'+fmt(s.potential)+'</b></span></div></div>';
+  var n=(s.picks&&s.picks.length)||0;
+  var typeLabel=n>1?(n+'er Kombi'):'Einzelwette';
+  var cid=(who?'o':'m')+esc(String(s.id||hashStr((s.picks||[]).map(function(p){return p.id+p.pick;}).join('')+(s.ts||''))));
+  var isOpen=!!SCHEIN_OPEN[cid];
+  var payCol=st==='verloren'?'var(--loss)':st==='gewonnen'?'var(--win)':'var(--ink)';
+  var payLbl=st==='verloren'?'Verlust':st==='gewonnen'?'Gewinn':'Mögl. Gewinn';
+  var payVal=st==='verloren'?('−'+fmt(s.stake)):((st==='gewonnen'?'+':'')+fmt(s.potential));
+  return '<div class="schein'+(isOpen?' open':'')+'" id="schein-'+cid+'">'
+    +'<div class="schein-head" onclick="toggleSchein(\''+cid+'\')">'
+      +'<div class="schein-top">'+(who?'<span class="schein-who">'+esc(who)+'</span>':'')+'<span class="schein-type">'+typeLabel+'</span>'+scheinTag(st)+'<span class="schein-chev">›</span></div>'
+      +'<div class="schein-figs"><span>Einsatz <b>'+fmt(s.stake)+'</b></span><span>Quote <b>'+Number(s.odds).toFixed(2)+'</b></span><span>'+payLbl+' <b style="color:'+payCol+'">'+payVal+' Münzen</b></span></div>'
+    +'</div>'
+    +'<div class="schein-body">'+picks+'</div>'
+  +'</div>';
 }
 function renderMeScheine(){
   var box=document.getElementById('meScheineList'); if(!box) return;
@@ -2839,6 +2951,73 @@ go=function(s,btn){
   if(s==='ranking') renderRanking();
   if(s==='start'){ renderDash(); if(!NEXT_KICK) loadNextKick(); }
 };
+
+/* ===== Profil: Erscheinungsbild (Theme) ===== */
+function applyTheme(mode){
+  var dark = mode==='dark' || (mode==='system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  var btns=document.querySelectorAll('#appearPick button');
+  for(var i=0;i<btns.length;i++){ btns[i].classList.toggle('active', btns[i].getAttribute('data-theme')===mode); }
+}
+function setTheme(mode){
+  try{ localStorage.setItem('fb_theme', mode); }catch(_){}
+  applyTheme(mode);
+  toast(mode==='dark'?'Dunkles Design aktiviert':mode==='light'?'Helles Design aktiviert':'Design folgt dem System');
+}
+function initTheme(){
+  var mode='light';
+  try{ mode=localStorage.getItem('fb_theme')||'light'; }catch(_){}
+  applyTheme(mode);
+  if(window.matchMedia){
+    try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){ var m=localStorage.getItem('fb_theme'); if(m==='system') applyTheme('system'); }); }catch(_){}
+  }
+}
+initTheme();
+
+/* ===== Profil: Benachrichtigungen ===== */
+function initNotifToggle(){
+  var t=document.getElementById('notifToggle'); if(!t) return;
+  var on=false; try{ on=localStorage.getItem('fb_notif')==='1'; }catch(_){}
+  if(typeof Notification!=='undefined' && Notification.permission==='denied') on=false;
+  t.classList.toggle('off', !on);
+}
+function toggleNotifications(){
+  var t=document.getElementById('notifToggle'); if(!t) return;
+  var turningOn=t.classList.contains('off');
+  if(turningOn){
+    if(typeof Notification==='undefined'){ toast('Benachrichtigungen werden von diesem Gerät nicht unterstützt'); return; }
+    Notification.requestPermission().then(function(perm){
+      if(perm==='granted'){ t.classList.remove('off'); try{ localStorage.setItem('fb_notif','1'); }catch(_){}; toast('Benachrichtigungen aktiviert'); }
+      else { toast('Benachrichtigungen wurden im Browser blockiert'); }
+    }).catch(function(){ toast('Konnte Benachrichtigungen nicht aktivieren'); });
+  } else {
+    t.classList.add('off'); try{ localStorage.setItem('fb_notif','0'); }catch(_){}; toast('Benachrichtigungen deaktiviert');
+  }
+}
+initNotifToggle();
+
+/* ===== Profil: Anzeigename bearbeiten ===== */
+function editProfile(){
+  var u=fbAuth.currentUser; if(!u){ toast('Bitte zuerst anmelden'); return; }
+  var neu=prompt('Neuer Anzeigename:', u.displayName||'');
+  if(neu==null) return;
+  neu=neu.trim();
+  if(neu.length<2){ toast('Name muss mindestens 2 Zeichen haben'); return; }
+  u.updateProfile({displayName:neu}).then(function(){
+    try{ fbDb.ref('users/'+u.uid+'/profile/name').set(neu); }catch(_){}
+    var pn=document.getElementById('profName'); if(pn) pn.textContent=neu;
+    var pa=document.getElementById('profAvatar'); if(pa) pa.textContent=neu.charAt(0).toUpperCase();
+    var hi=document.getElementById('dashHello'); if(hi) hi.textContent='Hallo '+neu+' 👋';
+    toast('Anzeigename aktualisiert');
+  }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
+}
+
+/* ===== Profil: Passwort ändern (per Reset-E-Mail) ===== */
+function changePassword(){
+  var u=fbAuth.currentUser; if(!u||!u.email){ toast('Bitte zuerst anmelden'); return; }
+  if(!confirm('Wir senden dir eine E-Mail zum Zurücksetzen des Passworts an '+u.email+'. Fortfahren?')) return;
+  fbAuth.sendPasswordResetEmail(u.email).then(function(){ toast('E-Mail zum Zurücksetzen gesendet'); }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
+}
 </script>
 </body>
 </html>
