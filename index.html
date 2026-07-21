@@ -329,6 +329,7 @@ select.admin-inp{width:155px}
 .toggle::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;right:3px;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .toggle.off{background:#d5dae4}.toggle.off::after{right:auto;left:3px}
 .appear{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 16px}
+.appear.appear2{grid-template-columns:repeat(2,1fr)}
 .appear button{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:12px 4px;font-family:inherit;font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px}
 .appear button .e{font-size:18px}.appear button.active{border-color:var(--navy);background:var(--tint);color:var(--navy)}
 
@@ -383,7 +384,7 @@ select.admin-inp{width:155px}
 .sc-pay{font-size:14px;font-weight:900;flex-shrink:0}
 
 /* bet slip */
-.slip{position:absolute;left:0;right:0;bottom:66px;z-index:30;transform:translateY(120%);transition:transform .28s cubic-bezier(.4,1.2,.5,1);pointer-events:none}
+.slip{position:absolute;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));z-index:30;transform:translateY(120%);transition:transform .28s cubic-bezier(.4,1.2,.5,1);pointer-events:none}
 .slip.show{transform:translateY(0);pointer-events:auto}
 .slip-inner{margin:0 10px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 -4px 24px rgba(8,22,51,.18),var(--shadow);overflow:hidden}
 .slip-bar{background:var(--navy);color:#fff;display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer}
@@ -404,9 +405,9 @@ select.admin-inp{width:155px}
 .win-row .l{font-size:13px;color:var(--ink-2);font-weight:600}.win-row .v{font-size:20px;font-weight:900;color:var(--win)}
 .submit{width:100%;height:50px;background:var(--navy);color:#fff;border:none;border-radius:13px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}.submit:active{transform:scale(.99)}
 
-/* nav */
-.nav{flex-shrink:0;height:66px;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);position:relative;z-index:40}
-.nav button{flex:1;background:none;border:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-3);cursor:pointer;padding-top:8px}
+/* nav – schwebende, abgerundete Leiste */
+.nav{flex-shrink:0;height:64px;background:var(--card);border:1px solid var(--line);border-radius:20px;display:flex;position:relative;z-index:40;margin:0 12px calc(10px + env(safe-area-inset-bottom));box-shadow:0 6px 20px rgba(8,22,51,.14)}
+.nav button{flex:1;background:none;border:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-3);cursor:pointer}
 .nav button svg{width:24px;height:24px;flex-shrink:0;display:block}.nav button span{font-size:10.5px;font-weight:600;letter-spacing:-.2px}.nav button.active{color:var(--navy)}
 
 /* toast */
@@ -520,8 +521,8 @@ function agError(msg){ var e=document.getElementById('agErr'); if(e) e.textConte
 function agMsg(code){
   var m={'auth/invalid-email':'Ungültige E-Mail-Adresse.','auth/missing-password':'Bitte Passwort eingeben.',
     'auth/weak-password':'Passwort zu kurz (mind. 6 Zeichen).','auth/email-already-in-use':'Diese E-Mail ist bereits registriert.',
-    'auth/invalid-credential':'E-Mail oder Passwort falsch.','auth/wrong-password':'E-Mail oder Passwort falsch.',
-    'auth/user-not-found':'Kein Konto mit dieser E-Mail.','auth/too-many-requests':'Zu viele Versuche – bitte später erneut.',
+    'auth/invalid-credential':'E-Mail oder Passwort falsch. Noch kein Konto? Bitte oben auf „Registrieren".','auth/wrong-password':'E-Mail oder Passwort falsch.',
+    'auth/user-not-found':'Kein Konto mit dieser E-Mail. Bitte zuerst registrieren.','auth/too-many-requests':'Zu viele Versuche – bitte später erneut.',
     'auth/network-request-failed':'Keine Verbindung – Internet prüfen.',
     'auth/configuration-not-found':'E-Mail/Passwort ist im Firebase-Projekt noch nicht aktiviert.'};
   return m[code] || ('Fehler: '+code);
@@ -708,7 +709,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 19</div>
+        <div class="hdr-sub2">Tippspiel · Build 21</div>
       </div>
     </div>
   </header>
@@ -786,7 +787,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
           <!-- create form -->
           <div id="createForm" style="display:none;border-top:1px solid var(--line-2);padding-top:12px">
             <div class="field"><label>Gruppenname</label><input id="cgName" placeholder="z. B. Büro-Liga"></div>
-            <div class="field"><label>Liga</label><select id="cgLeague"><option value="bl1">Bundesliga</option><option value="bl2">2. Bundesliga</option><option value="wm2026">🌍 WM 2026</option></select></div>
+            <div class="field"><label>Liga</label><select id="cgLeague"><option value="bl1">Bundesliga</option><option value="bl2">2. Bundesliga</option></select></div>
             <div class="field" style="padding-bottom:4px"><label>Icon für die Gruppe</label></div>
             <div class="emoji-pick" id="emojiPick"></div>
             <div class="field"><label>Startguthaben</label><input id="cgBal" type="number" value="1000"></div>
@@ -911,10 +912,9 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
           <div><div class="nm" id="profName">Spieler</div><div class="hd" id="profEmail"></div><div class="ms" id="profMeta"></div></div>
         </div>
         <div class="card"><div class="card-h"><h2>Erscheinungsbild</h2></div>
-          <div class="appear" id="appearPick">
+          <div class="appear appear2" id="appearPick">
             <button data-theme="light" onclick="setTheme('light')"><span class="e">☀️</span>Hell</button>
             <button data-theme="dark" onclick="setTheme('dark')"><span class="e">🌙</span>Dunkel</button>
-            <button data-theme="system" onclick="setTheme('system')"><span class="e">⚙️</span>System</button>
           </div>
         </div>
         <div class="card">
@@ -997,8 +997,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 const LEAGUES=[
   {id:'bl1',em:'',name:'Bundesliga'},
   {id:'bl2',em:'',name:'2. Bundesliga'},
-  {id:'wm2026',em:'🌍',name:'WM 2026'},
-  /* {id:'multi',em:'🌐',name:'Alle Events'},  // vorerst auskommentiert */
+  /* WM 2026 vorbei – Fokus auf 1. & 2. Bundesliga (Code bleibt für später erhalten) */
 ];
 function olShortcut(id){ return id==='bl2'?'bl2':'bl1'; }
 function lgLabel(id){ return id==='wm2026'?'WM 2026':id==='bl2'?'2. Bundesliga':'Bundesliga'; }
@@ -1062,7 +1061,7 @@ const FAQ=[
   ['📈','Quoten','Quoten werden automatisch aus den Spieldaten berechnet und können sich bis zum Anpfiff ändern.'],
   ['📋','Wettmärkte','Pro Spiel: Ergebnis (1 / X / 2) sowie Über/Unter 2,5 Tore. Pro Spiel zählt nur ein Tipp.'],
 ];
-const EMOJIS=['⚽','🏆','🍻','🔥','🎯','🦁','🐻','⭐','🍺','🏟️'];
+const EMOJIS=['⚽','🏆','🍻','🔥','🎯','🦁','🐻','⭐','🍺','🏟️','1️⃣','2️⃣','🇩🇪','🥅','🧤','👑','💰','📊','🎲','🚀'];
 
 let slip=[], slipOpen=false, editMode=false;
 const fmt=n=>n.toLocaleString('de-DE',{maximumFractionDigits:0});
@@ -1785,7 +1784,7 @@ function renderWMTable(){
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 function fbDB(){ return firebase.database(); }
 function fbUid(){ return (FB_USER && FB_USER.uid) || null; }
-function fbUserName(){ return (FB_USER && (FB_USER.displayName)) || 'Spieler'; }
+function fbUserName(){ return (FB_USER && (FB_USER.displayName || (FB_USER.email ? FB_USER.email.split('@')[0] : null))) || 'Spieler'; }
 function genCode(){ var c='', s='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; for(var i=0;i<5;i++) c+=s[Math.floor(Math.random()*s.length)]; return c; }
 var MY_GROUPS=[]; var CUR_GROUP=null; var CUR_MEMBERS=[];
 
@@ -1831,7 +1830,7 @@ function renderGroups(){
   if(!fbUid()){ box.innerHTML='<div class="empty">Bitte anmelden, um Gruppen zu sehen.</div>'; return; }
   box.innerHTML='<div class="empty">Lädt Gruppen …</div>';
   fbLoadMyGroups().then(function(gs){
-    MY_GROUPS=gs; try{renderDash();renderRanking();}catch(e){}
+    MY_GROUPS=gs; healMyNameInGroups(); try{renderDash();renderRanking();}catch(e){}
     if(!gs.length){ box.innerHTML='<div class="empty">Noch keine Gruppen. Erstelle eine oder tritt mit einem Code bei.</div>'; return; }
     box.innerHTML=gs.map(function(g){
       var mc=g.members?Object.keys(g.members).length:0;
@@ -1841,6 +1840,16 @@ function renderGroups(){
         +'<div class="grp-r"><span class="ch"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div></div>';
     }).join('');
   }).catch(function(){ box.innerHTML='<div class="empty">Gruppen konnten nicht geladen werden. Ist die Datenbank online & angemeldet?</div>'; });
+}
+/* Eigenen Anzeigenamen in allen meinen Gruppen aktuell halten */
+function healMyNameInGroups(){
+  var uid=fbUid(); if(!uid) return;
+  var myName=fbUserName();
+  (MY_GROUPS||[]).forEach(function(g){
+    var code=g._code||g.code; if(!code) return;
+    var m=g.members&&g.members[uid];
+    if(m && m.name!==myName){ m.name=myName; try{ fbDB().ref('groups/'+code+'/members/'+uid+'/name').set(myName); }catch(_){} }
+  });
 }
 function fbDoCreate(){
   var name=(document.getElementById('cgName').value||'').trim();
@@ -1881,7 +1890,16 @@ function openGroup(code){
 function fillGroupDetail(g){
   var uid=fbUid();
   var members=g.members||{};
-  CUR_MEMBERS=Object.keys(members).map(function(k){ return { uid:k, name:(members[k]&&members[k].name)||'?', balance:(members[k]&&members[k].balance)||0 }; });
+  /* Namen aus Scheinen ableiten – Fallback, falls im Mitglieds-Datensatz kein Name steht */
+  var slipNames={}; var allSlips=g.slips||{};
+  Object.keys(allSlips).forEach(function(u){ var us=allSlips[u]||{}; Object.keys(us).forEach(function(k){ if(us[k]&&us[k].name) slipNames[u]=us[k].name; }); });
+  /* Eigenen Namen in dieser Gruppe aktuell halten (self-heal) */
+  var myName=fbUserName();
+  if(uid && members[uid] && members[uid].name!==myName){
+    members[uid].name=myName;
+    try{ fbDB().ref('groups/'+(g._code||g.code)+'/members/'+uid+'/name').set(myName); }catch(_){}
+  }
+  CUR_MEMBERS=Object.keys(members).map(function(k){ return { uid:k, name:(members[k]&&members[k].name)||slipNames[k]||'Spieler', balance:(members[k]&&members[k].balance)||0 }; });
   CUR_MEMBERS.sort(function(a,b){ return b.balance-a.balance; });
   CUR_GROUP=g;
   var myIdx=-1; for(var i=0;i<CUR_MEMBERS.length;i++){ if(CUR_MEMBERS[i].uid===uid){ myIdx=i; break; } }
@@ -1935,8 +1953,8 @@ function fbKick(memUid){
     .then(function(g){ if(g){ var idx=MY_GROUPS.findIndex(function(x){return x._code===code;}); if(idx>=0) MY_GROUPS[idx]=g; fillGroupDetail(g); } })
     .catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
 }
-/* nach Login Gruppen laden */
-try{ firebase.auth().onAuthStateChanged(function(u){ if(u){ renderGroups(); } }); }catch(e){}
+/* nach Login Gruppen + Scheine laden (auch für Dashboard-Statistiken) */
+try{ firebase.auth().onAuthStateChanged(function(u){ if(u&&(u.emailVerified||!REQUIRE_EMAIL_VERIFICATION)){ renderGroups(); setTimeout(function(){ if(typeof loadMySlipsAll==='function') loadMySlipsAll(); if(typeof autoSettleAllGroups==='function') autoSettleAllGroups(); },1000); } }); }catch(e){}
 </script>
 <script>
 /* ===== Match-Analyse (Port aus Kickanalyse) für Bundesliga-Begegnungen ===== */
@@ -2378,7 +2396,7 @@ function renderRanking(){
   if(!rt) return;
   var groups=(typeof MY_GROUPS!=='undefined'&&MY_GROUPS)||[];
   var agg={};
-  groups.forEach(function(g){ var sb=g.startBalance||1000; var mem=g.members||{}; Object.keys(mem).forEach(function(u){ var nm=(mem[u]&&mem[u].name)||'?'; var bal=(mem[u]&&mem[u].balance)||0; if(!agg[nm]) agg[nm]={net:0,groups:0}; agg[nm].net+=(bal-sb); agg[nm].groups++; }); });
+  groups.forEach(function(g){ var sb=g.startBalance||1000; var mem=g.members||{}; Object.keys(mem).forEach(function(u){ var nm=(mem[u]&&mem[u].name)||'Spieler'; var bal=(mem[u]&&mem[u].balance)||0; if(!agg[nm]) agg[nm]={net:0,groups:0}; agg[nm].net+=(bal-sb); agg[nm].groups++; }); });
   var arr=Object.keys(agg).map(function(n){return {name:n,net:agg[n].net,groups:agg[n].groups};}).sort(function(a,b){return b.net-a.net;});
   rt.innerHTML=arr.length?arr.map(function(r,i){ var col=r.net>0?'var(--win)':r.net<0?'var(--loss)':'var(--ink)'; return '<div class="lb-row"><div class="lb-rk '+(i<3?'top':'')+'">'+(i+1)+'</div><div class="lb-av">'+esc((r.name[0]||'?').toUpperCase())+'</div><div class="lb-m"><div class="n">'+esc(r.name)+'</div><div class="h">'+r.groups+' '+(r.groups===1?'Gruppe':'Gruppen')+'</div></div><div class="lb-b" style="color:'+col+'">'+(r.net>0?'+':'')+fmt(r.net)+' Münzen</div></div>'; }).join('') : '<div class="empty" style="padding:16px">Noch keine Gruppen – erstelle eine oder tritt einer bei.</div>';
   if(rs) rs.innerHTML='<div class="empty" style="padding:16px">Größte Einzelgewinne erscheinen nach der Auswertung.</div>';
@@ -2442,7 +2460,7 @@ widgetInner=function(id){
     return '<div class="card-h"><h2>Gewinn / Verlust</h2><p>über alle Gruppen</p></div><div style="padding:16px 16px 6px"><div style="font-size:30px;font-weight:900;color:'+col+'">'+(net>0?'+':'')+fmt(net)+' Münzen</div><div style="font-size:12px;color:var(--ink-3);margin-top:2px">'+groups.length+' '+(groups.length===1?'Gruppe':'Gruppen')+'</div></div>'+(per?'<div class="rows">'+per+'</div>':'');
   }
   if(id==='tracker'){
-    var mp={}; groups.forEach(function(g){ var sb=g.startBalance||1000; var mem=g.members||{}; Object.keys(mem).forEach(function(u){ if(u===uid) return; var nm=(mem[u]&&mem[u].name)||'?'; var bal=(mem[u]&&mem[u].balance)||0; if(!mp[nm]) mp[nm]={net:0,g:0}; mp[nm].net+=(bal-sb); mp[nm].g++; }); });
+    var mp={}; groups.forEach(function(g){ var sb=g.startBalance||1000; var mem=g.members||{}; Object.keys(mem).forEach(function(u){ if(u===uid) return; var nm=(mem[u]&&mem[u].name)||'Spieler'; var bal=(mem[u]&&mem[u].balance)||0; if(!mp[nm]) mp[nm]={net:0,g:0}; mp[nm].net+=(bal-sb); mp[nm].g++; }); });
     var arr=Object.keys(mp).map(function(n){return {name:n,net:mp[n].net,g:mp[n].g};}).sort(function(a,b){return b.net-a.net;}).slice(0,6);
     if(!arr.length) return '<div class="card-h"><h2>Spieler im Blick</h2></div><div style="padding:16px;color:var(--ink-3);font-size:13px">Noch keine Mitspieler – tritt einer Gruppe bei oder lade Freunde ein.</div>';
     return '<div class="card-h"><h2>Spieler im Blick</h2><p>Mitspieler nach Gewinn</p></div><div class="rows">'+arr.map(function(pl){ var c=pl.net>0?'var(--win)':pl.net<0?'var(--loss)':'var(--ink-3)'; return '<div class="trk"><div class="trk-av">'+esc((pl.name[0]||'?').toUpperCase())+'</div><div class="trk-m"><div class="n">'+esc(pl.name)+'</div><div class="h">'+pl.g+' '+(pl.g===1?'Gruppe':'Gruppen')+'</div></div><div class="trk-gv" style="color:'+c+'">'+(pl.net>0?'+':'')+fmt(pl.net)+' Münzen</div></div>'; }).join('')+'</div>';
@@ -2530,7 +2548,7 @@ function settleGroupSlips(group, force){
          Admin. Jede Mitglieds-Schreibung läuft separat mit eigenem catch, damit
          eine von den Sicherheitsregeln abgelehnte Fremdschreibung NIE die eigene
          Auswertung blockiert (Root-update() wäre atomar → alles oder nichts). */
-      var writes=[], settledTotal=0;
+      var writes=[], settledTotal=0, myNotifs=[];
       Object.keys(data).forEach(function(uid){
         /* Ohne Admin-Rechte nur die eigenen Scheine auswerten (Firebase-Regeln) */
         if(uid!==myUid && !isOwner) return;
@@ -2541,24 +2559,29 @@ function settleGroupSlips(group, force){
           if(!s || s.status!=='offen') return;
           var picks=s.picks||[];
           if(!picks.length) return;
-          var anyLoss=false, allDecided=true;
+          var anyLoss=false, allDecided=true, correct=0;
           picks.forEach(function(p){
             var r=resMap[p.id];
             if(!r){ allDecided=false; return; }
             var out=gradeTip(p.pick, r.g1, r.g2);
-            if(out==='loss') anyLoss=true;
-            else if(out!=='win') allDecided=false;
+            if(out==='win') correct++;
+            else if(out==='loss') anyLoss=true;
+            else allDecided=false;
           });
           if(anyLoss){
             upd['slips/'+uid+'/'+sid+'/status']='verloren';
             upd['slips/'+uid+'/'+sid+'/settledAt']=now;
+            upd['slips/'+uid+'/'+sid+'/correctLegs']=correct;
             settled++;
+            if(uid===myUid) myNotifs.push({status:'verloren',correct:correct,total:picks.length,stake:s.stake,potential:s.potential,id:sid});
           } else if(allDecided){
             upd['slips/'+uid+'/'+sid+'/status']='gewonnen';
             upd['slips/'+uid+'/'+sid+'/settledAt']=now;
+            upd['slips/'+uid+'/'+sid+'/correctLegs']=correct;
             var base=(memNewBal!=null)?memNewBal:((members[uid]&&members[uid].balance)||0);
             memNewBal=base+(s.potential||0);
             settled++;
+            if(uid===myUid) myNotifs.push({status:'gewonnen',correct:correct,total:picks.length,stake:s.stake,potential:s.potential,id:sid});
           }
         });
         if(memNewBal!=null){ upd['members/'+uid+'/balance']=memNewBal; }
@@ -2568,6 +2591,7 @@ function settleGroupSlips(group, force){
           writes.push(fbDB().ref('groups/'+code).update(upd).then(function(){return settled;}).catch(function(){return 0;}));
         }
       });
+      myNotifs.forEach(function(n){ notifySlipResult(n, group.name||'Gruppe'); });
       if(!writes.length) return 0;
       return Promise.all(writes).then(function(counts){
         return counts.reduce(function(a,b){return a+b;},0);
@@ -2783,8 +2807,62 @@ function loadMySlipsAll(){
   })).then(function(arr){
     MY_SLIPS=[].concat.apply([],arr).sort(function(a,b){return (b.ts||0)-(a.ts||0);});
     try{ renderDash(); }catch(e){}
+    try{ checkMissedNotifications(); }catch(e){}
     return MY_SLIPS;
   });
+}
+
+/* ===== Push-/System-Benachrichtigungen bei Schein-Auswertung ===== */
+var NOTIF_ICON='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#14336e"/><circle cx="50" cy="50" r="30" fill="none" stroke="#fff" stroke-width="6"/><path d="M50 20a30 30 0 0 1 20 50 30 30 0 0 1-40 0 30 30 0 0 1 20-50z" fill="none" stroke="#fff" stroke-width="4"/><line x1="20" y1="50" x2="80" y2="50" stroke="#fff" stroke-width="4"/></svg>');
+function getNotifiedSet(){ try{ return JSON.parse(localStorage.getItem('fb_notified_slips')||'[]'); }catch(_){ return []; } }
+function saveNotifiedSet(a){ try{ localStorage.setItem('fb_notified_slips', JSON.stringify(a.slice(-500))); }catch(_){} }
+function isNotified(id){ return getNotifiedSet().indexOf(id)>=0; }
+function markNotified(id){ var a=getNotifiedSet(); if(a.indexOf(id)<0){ a.push(id); saveNotifiedSet(a); } }
+function notifsEnabled(){
+  try{ if(localStorage.getItem('fb_notif')!=='1') return false; }catch(_){ return false; }
+  return typeof Notification!=='undefined' && Notification.permission==='granted';
+}
+function slipNotifText(n){
+  if(n.status==='gewonnen'){
+    var body = n.total>1 ? ('Alles richtig ('+n.total+'/'+n.total+') – Glückwunsch! +'+fmt(n.potential)+' Münzen')
+                         : ('Gewonnen – Glückwunsch! +'+fmt(n.potential)+' Münzen');
+    return { title:'🎉 Schein gewonnen!', body: body };
+  }
+  return { title:'😔 Schein verloren', body: n.correct+' von '+n.total+' Spielen korrekt – der Schein ist leider weg' };
+}
+function fireLocalNotification(title, body){
+  try{
+    var opts={ body:body, icon:NOTIF_ICON, badge:NOTIF_ICON, tag:'freebet-'+Math.random().toString(36).slice(2), renotify:false };
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistration){
+      navigator.serviceWorker.getRegistration().then(function(reg){
+        if(reg && reg.showNotification) reg.showNotification(title, opts);
+        else new Notification(title, opts);
+      }).catch(function(){ try{ new Notification(title, opts); }catch(_){} });
+    } else if(typeof Notification!=='undefined'){ new Notification(title, opts); }
+  }catch(_){}
+}
+function notifySlipResult(n, groupName){
+  if(!n||!n.id) return;
+  if(isNotified(n.id)) return;
+  markNotified(n.id);
+  if(!notifsEnabled()) return;
+  var t=slipNotifText(n);
+  fireLocalNotification(t.title, t.body+' · '+groupName);
+}
+/* Beim (Neu-)Laden: abgeschlossene eigene Scheine nachmelden, die noch nicht gemeldet wurden.
+   Beim allerersten Lauf wird der Altbestand nur als "gemeldet" markiert (kein Nachmelden). */
+function checkMissedNotifications(){
+  if(!MY_SLIPS||!MY_SLIPS.length) return;
+  var init; try{ init=localStorage.getItem('fb_notif_init'); }catch(_){}
+  MY_SLIPS.forEach(function(s){
+    if(!s || (s.status!=='gewonnen' && s.status!=='verloren')) return;
+    if(isNotified(s.id)) return;
+    if(!init){ markNotified(s.id); return; }
+    var total=(s.picks&&s.picks.length)||0;
+    var correct=(s.correctLegs!=null)?s.correctLegs:(s.status==='gewonnen'?total:0);
+    notifySlipResult({status:s.status,correct:correct,total:total,stake:s.stake,potential:s.potential,id:s.id}, s._g||'Gruppe');
+  });
+  try{ if(!init) localStorage.setItem('fb_notif_init','1'); }catch(_){}
 }
 
 /* ===== Nächster Anpfiff (Dashboard) ===== */
@@ -2839,7 +2917,7 @@ widgetInner=function(id){
       Object.keys(mem).forEach(function(u){
         var net=((mem[u]&&mem[u].balance)||0)-sb;
         if(u===uid) myNet+=net;
-        else { var nm=(mem[u]&&mem[u].name)||'?'; rivals[nm]=(rivals[nm]||0)+net; }
+        else { var nm=(mem[u]&&mem[u].name)||'Spieler'; rivals[nm]=(rivals[nm]||0)+net; }
       });
     });
     var top=Object.keys(rivals).map(function(n){return {n:n,net:rivals[n]};}).sort(function(a,b){return b.net-a.net;})[0];
@@ -2862,7 +2940,7 @@ function renderRanking(){
     Object.keys(groups).forEach(function(code){
       var g=groups[code]||{}; var sb=g.startBalance||1000; var mem=g.members||{};
       Object.keys(mem).forEach(function(u){
-        var nm=(mem[u]&&mem[u].name)||'?'; var bal=(mem[u]&&mem[u].balance)||0;
+        var nm=(mem[u]&&mem[u].name)||'Spieler'; var bal=(mem[u]&&mem[u].balance)||0;
         if(!agg[nm]) agg[nm]={net:0,groups:0};
         agg[nm].net+=(bal-sb); agg[nm].groups++;
       });
@@ -2952,25 +3030,24 @@ go=function(s,btn){
   if(s==='start'){ renderDash(); if(!NEXT_KICK) loadNextKick(); }
 };
 
-/* ===== Profil: Erscheinungsbild (Theme) ===== */
+/* ===== Profil: Erscheinungsbild (Theme) – Hell / Dunkel ===== */
 function applyTheme(mode){
-  var dark = mode==='dark' || (mode==='system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  if(mode!=='dark') mode='light';
+  document.documentElement.setAttribute('data-theme', mode);
   var btns=document.querySelectorAll('#appearPick button');
   for(var i=0;i<btns.length;i++){ btns[i].classList.toggle('active', btns[i].getAttribute('data-theme')===mode); }
 }
 function setTheme(mode){
+  if(mode!=='dark') mode='light';
   try{ localStorage.setItem('fb_theme', mode); }catch(_){}
   applyTheme(mode);
-  toast(mode==='dark'?'Dunkles Design aktiviert':mode==='light'?'Helles Design aktiviert':'Design folgt dem System');
+  toast(mode==='dark'?'Dunkles Design aktiviert':'Helles Design aktiviert');
 }
 function initTheme(){
   var mode='light';
   try{ mode=localStorage.getItem('fb_theme')||'light'; }catch(_){}
+  if(mode==='system') mode='light';
   applyTheme(mode);
-  if(window.matchMedia){
-    try{ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){ var m=localStorage.getItem('fb_theme'); if(m==='system') applyTheme('system'); }); }catch(_){}
-  }
 }
 initTheme();
 
@@ -2987,8 +3064,13 @@ function toggleNotifications(){
   if(turningOn){
     if(typeof Notification==='undefined'){ toast('Benachrichtigungen werden von diesem Gerät nicht unterstützt'); return; }
     Notification.requestPermission().then(function(perm){
-      if(perm==='granted'){ t.classList.remove('off'); try{ localStorage.setItem('fb_notif','1'); }catch(_){}; toast('Benachrichtigungen aktiviert'); }
-      else { toast('Benachrichtigungen wurden im Browser blockiert'); }
+      if(perm==='granted'){
+        t.classList.remove('off'); try{ localStorage.setItem('fb_notif','1'); }catch(_){}
+        toast('Benachrichtigungen aktiviert');
+        if(typeof fireLocalNotification==='function') fireLocalNotification('🔔 Benachrichtigungen aktiv','Du bekommst ab jetzt Bescheid, sobald deine Scheine ausgewertet werden.');
+      }
+      else if(perm==='denied'){ toast('Im Browser blockiert – bitte in den Website-Einstellungen erlauben'); }
+      else { toast('Benachrichtigungen nicht aktiviert'); }
     }).catch(function(){ toast('Konnte Benachrichtigungen nicht aktivieren'); });
   } else {
     t.classList.add('off'); try{ localStorage.setItem('fb_notif','0'); }catch(_){}; toast('Benachrichtigungen deaktiviert');
@@ -3008,6 +3090,7 @@ function editProfile(){
     var pn=document.getElementById('profName'); if(pn) pn.textContent=neu;
     var pa=document.getElementById('profAvatar'); if(pa) pa.textContent=neu.charAt(0).toUpperCase();
     var hi=document.getElementById('dashHello'); if(hi) hi.textContent='Hallo '+neu+' 👋';
+    try{ healMyNameInGroups(); }catch(_){}
     toast('Anzeigename aktualisiert');
   }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
 }
@@ -3018,6 +3101,10 @@ function changePassword(){
   if(!confirm('Wir senden dir eine E-Mail zum Zurücksetzen des Passworts an '+u.email+'. Fortfahren?')) return;
   fbAuth.sendPasswordResetEmail(u.email).then(function(){ toast('E-Mail zum Zurücksetzen gesendet'); }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
 }
+
+/* Dashboard mit den ECHTEN Widget-Overrides neu zeichnen (statt der Demo-Daten
+   aus dem ersten renderDash-Aufruf vor dem Laden der Overrides). */
+try{ renderDash(); }catch(e){}
 </script>
 </body>
 </html>
