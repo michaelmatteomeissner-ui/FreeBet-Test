@@ -411,6 +411,8 @@ select.admin-inp{width:155px}
 .nav button svg{width:24px;height:24px;flex-shrink:0;display:block}.nav button span{font-size:10.5px;font-weight:600;letter-spacing:-.2px}.nav button.active{color:var(--navy)}
 
 /* toast */
+#announceBar{flex-shrink:0;background:#fff7e6;color:#8a5a00;border-bottom:1px solid #ffe2a8;padding:9px 14px;font-size:12.5px;font-weight:600;line-height:1.4;text-align:center}
+html[data-theme="dark"] #announceBar{background:#2a2210;color:#f0c674;border-bottom-color:#4a3a15}
 .toast{position:absolute;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:60;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:88%;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -709,10 +711,12 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 21</div>
+        <div class="hdr-sub2">Tippspiel · Build 22</div>
       </div>
     </div>
   </header>
+
+  <div id="announceBar" style="display:none"></div>
 
   <!-- MAIN -->
   <main id="main">
@@ -790,7 +794,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
             <div class="field"><label>Liga</label><select id="cgLeague"><option value="bl1">Bundesliga</option><option value="bl2">2. Bundesliga</option></select></div>
             <div class="field" style="padding-bottom:4px"><label>Icon für die Gruppe</label></div>
             <div class="emoji-pick" id="emojiPick"></div>
-            <div class="field"><label>Startguthaben</label><input id="cgBal" type="number" value="1000"></div>
+            <div class="field"><label>Startguthaben</label><input id="cgBal" type="number" value="1000" oninput="this.dataset.touched=1"></div>
             <button class="btn btn-navy" style="width:calc(100% - 32px);margin:0 16px 14px" onclick="fbDoCreate()">Gruppe erstellen</button>
           </div>
         </div>
@@ -824,7 +828,9 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
             <div class="admin-row"><span class="admin-lbl">Mindesteinsatz</span><input class="admin-inp" type="number" id="aMinStake" value="5"></div>
             <div class="admin-row"><span class="admin-lbl">Höchsteinsatz</span><input class="admin-inp" type="number" id="aMaxStake" value="0" placeholder="0 = kein Limit"></div>
             <div class="admin-row"><span class="admin-lbl">Scheine pro Spieltag</span><input class="admin-inp" type="number" id="aMaxSlips" value="1" placeholder="0 = unbegrenzt"></div>
-            <div class="admin-row"><span class="admin-lbl">Konkurrenz-Scheine</span><select class="admin-inp" id="aOppVis"><option value="afterKickoff">Erst nach Anpfiff</option><option value="always">Immer sofort</option></select></div>
+            <div class="admin-row"><span class="admin-lbl">Wettschluss</span><select class="admin-inp" id="aBetCutoff"><option value="perMatch">Pro Spiel (bei Anpfiff)</option><option value="matchdayStart">Ganzer Spieltag ab 1. Anpfiff</option></select></div>
+            <div class="admin-row"><span class="admin-lbl">Konkurrenz-Scheine</span><select class="admin-inp" id="aOppVis"><option value="afterKickoff">Ab Anpfiff sichtbar</option><option value="always">Immer sofort</option><option value="afterMatchday">Erst nach Spieltagsende</option><option value="never">Nie sichtbar</option></select></div>
+            <div class="admin-row"><span class="admin-lbl">Auswertung</span><select class="admin-inp" id="aSettleMode"><option value="auto">Automatisch</option><option value="manual">Nur manuell (Admin)</option></select></div>
             <label class="admin-check"><input type="checkbox" id="aJoinLock"> Beitritt gesperrt – keine neuen Mitglieder</label>
             <button class="admin-btn primary" onclick="adminSaveSettings()">Speichern</button>
           </div>
@@ -911,6 +917,23 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
           <div class="p-av" id="profAvatar">?</div>
           <div><div class="nm" id="profName">Spieler</div><div class="hd" id="profEmail"></div><div class="ms" id="profMeta"></div></div>
         </div>
+
+        <!-- APP-ADMIN (nur für den App-Administrator sichtbar) -->
+        <div class="card" id="appAdminCard" style="display:none;border:1.5px solid #d8e3f5">
+          <div class="card-h"><h2>🛡️ App-Administration</h2><p>App-weite Einstellungen für alle Nutzer</p></div>
+          <div class="admin-sec" style="border:none;box-shadow:none;margin:0">
+            <div class="admin-row"><span class="admin-lbl">Standard-Startguthaben</span><input class="admin-inp" type="number" id="acStartBal" value="1000"></div>
+            <label class="admin-check"><input type="checkbox" id="acVerify"> E-Mail-Bestätigung Pflicht (neue Konten)</label>
+            <div class="field" style="padding:12px 0 4px"><label>Globale Ansage (leer = aus)</label><input id="acAnnounce" placeholder="z. B. Wartung am Sonntag 10 Uhr"></div>
+            <button class="admin-btn primary" onclick="appAdminSave()">Speichern</button>
+            <div class="admin-hint" id="acHint" style="margin-top:8px"></div>
+          </div>
+          <div class="admin-sec" style="border:none;box-shadow:none;margin:0;border-top:1px solid var(--line-2);border-radius:0">
+            <div class="admin-sec-t">Alle Gruppen</div>
+            <div id="acGroups"><div class="empty" style="padding:8px">Lädt …</div></div>
+          </div>
+        </div>
+
         <div class="card"><div class="card-h"><h2>Erscheinungsbild</h2></div>
           <div class="appear appear2" id="appearPick">
             <button data-theme="light" onclick="setTheme('light')"><span class="e">☀️</span>Hell</button>
@@ -2168,21 +2191,31 @@ function betCard(o){
   if(o.detailHTML){ html+='<div class="mx-det" id="det-'+o.mid+'" style="display:none">'+o.detailHTML+'</div>'; }
   html+='</div>'; return html;
 }
+/* Wettschluss-Modus: bei "matchdayStart" ist ab dem ersten Anpfiff der GANZE
+   Spieltag gesperrt (kein neuer Tipp mehr), sonst nur das einzelne Spiel. */
+function betCutoffMode(){ return (CUR_GROUP&&CUR_GROUP.settings&&CUR_GROUP.settings.betCutoff)||'perMatch'; }
+function matchLocked(perMatchStarted){
+  if(perMatchStarted) return true;
+  if(betCutoffMode()==='matchdayStart' && groupMatchdayStarted()) return true;
+  return false;
+}
 function groupMatchCard(match){
   var h=match.team1.teamName, a=match.team2.teamName, pp=calcProbs(h,a), sc=match.matchIsFinished?olScore(match):null;
-  var started=!match.matchIsFinished && isMatchStarted(match.matchDateTime);
+  var started=!match.matchIsFinished && matchLocked(isMatchStarted(match.matchDateTime));
   return betCard({ mid:'g'+(match.matchID||hashStr(h+a+(match.matchDateTime||''))), when:olDateTime(match.matchDateTime), fin:match.matchIsFinished, started:started, hs:sc?sc.hs:null, as:sc?sc.as:null, hCrest:crestHTML(h), aCrest:crestHTML(a), h:h, a:a, pp:pp, detailHTML:matchDetailHTML(match,pp) });
 }
 function groupWmCard(match){
   var h=wmTName(match.team1), a=wmTName(match.team2), pp=calcWmProbs(h,a);
   var fin=!!(match.score&&match.score.ft), hs=fin?match.score.ft[0]:null, as=fin?match.score.ft[1]:null;
-  var started=!fin && isWmMatchStarted(match);
+  var started=!fin && matchLocked(isWmMatchStarted(match));
   var when=match.date?(wmDate(match.date)+(match.time?(' · '+String(match.time).replace(/\s*UTC.*/i,'').trim()+' Uhr'):'')):'';
   return betCard({ mid:'g'+hashStr(h+a+(match.date||'')), when:when, fin:fin, started:started, hs:hs, as:as, hCrest:wmCrest(h), aCrest:wmCrest(a), h:wmName(h), a:wmName(a), pp:pp, detailHTML:'' });
 }
 var GD_MD_FIRST_KICKOFF=null;
+var GD_MD_ALL_FINISHED=false;
 var MATCH_KICKS={};   // mid -> Anpfiff-Timestamp der aktuell gerenderten Gruppen-Spiele
 function groupMatchdayStarted(){ return GD_MD_FIRST_KICKOFF?(Date.now()>=GD_MD_FIRST_KICKOFF):true; }
+function groupMatchdayFinished(){ return !!GD_MD_ALL_FINISHED; }
 function renderGroupSpiele(){
   var box=document.getElementById('matchList'); if(!box) return;
   var lbl=document.getElementById('gdMdLabel'), mn=document.getElementById('gMdNum');
@@ -2199,6 +2232,7 @@ function renderGroupSpiele(){
       var kicks=[];
       list.forEach(function(m){ var t=wmDateTime(m.date,m.time); if(t){ MATCH_KICKS['g'+hashStr((m.team1||'')+(m.team2||'')+(m.date||''))]=t.getTime(); kicks.push(t.getTime()); } });
       GD_MD_FIRST_KICKOFF=kicks.length?Math.min.apply(null,kicks):null;
+      GD_MD_ALL_FINISHED=list.length>0 && list.every(function(m){ return !!(m.score&&m.score.ft); });
       box.innerHTML=list.length?list.map(groupWmCard).join(''):'<div class="empty">Keine Spiele in dieser Runde.</div>'; syncOddStates();
       renderKonk(); updateGdDeadline();
     };
@@ -2221,6 +2255,7 @@ function renderGroupSpiele(){
       MATCH_KICKS[mid]=t.getTime(); kicks.push(t.getTime());
     });
     GD_MD_FIRST_KICKOFF=kicks.length?Math.min.apply(null,kicks):null;
+    GD_MD_ALL_FINISHED=data.length>0 && data.every(function(m){ return !!m.matchIsFinished; });
     box.innerHTML=data.map(groupMatchCard).join(''); syncOddStates();
     renderKonk(); updateGdDeadline();
   }).catch(function(){ box.innerHTML='<div class="empty">Spiele konnten nicht geladen werden. Bitte später erneut.</div>'; });
@@ -2238,7 +2273,12 @@ function submitSlip(){
   var uid=fbUid(), code=CUR_GROUP._code||CUR_GROUP.code;
   var me=(CUR_GROUP.members&&CUR_GROUP.members[uid])||{balance:0};
   if(stake>(me.balance||0)){ toast('Nicht genug Guthaben'); return; }
-  /* Wettschluss: kein Tipp auf bereits angepfiffene Spiele */
+  /* Wettschluss: bei "matchdayStart" ist ab dem ersten Anpfiff der ganze Spieltag zu */
+  if(betCutoffMode()==='matchdayStart' && groupMatchdayStarted()){
+    toast('⏱️ Spieltag hat begonnen – keine neuen Scheine mehr möglich');
+    return;
+  }
+  /* Sonst: kein Tipp auf bereits angepfiffene Spiele */
   var now=Date.now();
   var late=slip.filter(function(s){ return MATCH_KICKS[s.id] && now>=MATCH_KICKS[s.id]; });
   if(late.length){
@@ -2354,8 +2394,17 @@ function renderKonk(){
   var box=document.getElementById('konkList'); if(!box) return;
   if(!CUR_GROUP){ box.innerHTML=''; return; }
   var settings=CUR_GROUP.settings||{};
-  if((settings.oppVisibility||'afterKickoff')!=='always' && !groupMatchdayStarted()){
+  var vis=settings.oppVisibility||'afterKickoff';
+  if(vis==='never'){
+    box.innerHTML='<div class="empty">Die Scheine der Mitspieler sind in dieser Gruppe ausgeblendet.</div>';
+    return;
+  }
+  if(vis==='afterKickoff' && !groupMatchdayStarted()){
     box.innerHTML='<div class="empty">Tipps der Mitspieler werden ab Anpfiff des Spieltags sichtbar.</div>';
+    return;
+  }
+  if(vis==='afterMatchday' && !groupMatchdayFinished()){
+    box.innerHTML='<div class="empty">Tipps der Mitspieler werden erst nach Spieltagsende sichtbar.</div>';
     return;
   }
   var code=CUR_GROUP._code||CUR_GROUP.code, uid=fbUid();
@@ -2531,9 +2580,11 @@ function buildResultMap(league){
   }).catch(function(){ return {}; });
 }
 var _settleRunning={};
-function settleGroupSlips(group, force){
+function settleGroupSlips(group, force, adminAction){
   if(!group) return Promise.resolve(0);
   var code=group._code||group.code; if(!code) return Promise.resolve(0);
+  /* Auswertungs-Modus "manuell": nur der Admin per "Jetzt auswerten" wertet aus */
+  if(group.settings && group.settings.settleMode==='manual' && !adminAction) return Promise.resolve(0);
   var now=Date.now();
   if(!force && _settleRunning[code] && (now-_settleRunning[code])<60000) return Promise.resolve(0);
   _settleRunning[code]=now;
@@ -2599,8 +2650,8 @@ function settleGroupSlips(group, force){
     });
   }).catch(function(){ return 0; });
 }
-function settleAndRefreshGroup(group, cb, force){
-  settleGroupSlips(group, force!==false).then(function(settled){
+function settleAndRefreshGroup(group, cb, force, adminAction){
+  settleGroupSlips(group, force!==false, adminAction).then(function(settled){
     var code=group._code||group.code;
     if(!settled){
       /* Auch ohne neue Auswertung: frische Ergebnis-Map ist geladen → Scheine mit
@@ -2628,7 +2679,9 @@ function loadAdminSettings(){
   if(g('aMinStake')) g('aMinStake').value=(s.minStake!=null)?s.minStake:5;
   if(g('aMaxStake')) g('aMaxStake').value=(s.maxStake!=null)?s.maxStake:0;
   if(g('aMaxSlips')) g('aMaxSlips').value=(s.maxSlips!=null)?s.maxSlips:1;
+  if(g('aBetCutoff')) g('aBetCutoff').value=s.betCutoff||'perMatch';
   if(g('aOppVis')) g('aOppVis').value=s.oppVisibility||'afterKickoff';
+  if(g('aSettleMode')) g('aSettleMode').value=s.settleMode||'auto';
   if(g('aJoinLock')) g('aJoinLock').checked=!!s.joinLocked;
   var ib=g('inviteBox'); if(ib) ib.textContent='Code: '+(CUR_GROUP._code||CUR_GROUP.code||'?')+' 📋';
 }
@@ -2647,12 +2700,16 @@ function adminSaveSettings(){
   var maxStake=parseFloat(document.getElementById('aMaxStake').value); if(isNaN(maxStake)||maxStake<0) maxStake=0;
   var maxSlips=parseInt(document.getElementById('aMaxSlips').value,10); if(isNaN(maxSlips)||maxSlips<0) maxSlips=0;
   var oppVis=document.getElementById('aOppVis').value||'afterKickoff';
+  var betCutoff=(document.getElementById('aBetCutoff')||{}).value||'perMatch';
+  var settleMode=(document.getElementById('aSettleMode')||{}).value||'auto';
   var jl=document.getElementById('aJoinLock');
-  var settings={minStake:minStake,maxStake:maxStake,maxSlips:maxSlips,oppVisibility:oppVis,joinLocked:!!(jl&&jl.checked)};
+  var settings={minStake:minStake,maxStake:maxStake,maxSlips:maxSlips,oppVisibility:oppVis,betCutoff:betCutoff,settleMode:settleMode,joinLocked:!!(jl&&jl.checked)};
   var updates={}; updates['groups/'+code+'/startBalance']=startBal; updates['groups/'+code+'/settings']=settings;
   fbDB().ref().update(updates).then(function(){
     CUR_GROUP.startBalance=startBal; CUR_GROUP.settings=settings;
+    var idx=(MY_GROUPS||[]).findIndex(function(x){return (x._code||x.code)===code;}); if(idx>=0){ MY_GROUPS[idx].startBalance=startBal; MY_GROUPS[idx].settings=settings; }
     toast('Einstellungen gespeichert');
+    try{ renderGroupSpiele(); renderKonk(); }catch(e){}
   }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
 }
 function adminAdjBalance(memUid){
@@ -2677,7 +2734,7 @@ function adminSettleNow(){
   toast('Werte Spieltag aus …');
   settleAndRefreshGroup(CUR_GROUP, function(settled){
     toast(settled ? (settled+' Schein(e) ausgewertet') : 'Keine neuen Ergebnisse – Spiele evtl. noch nicht beendet.');
-  });
+  }, true, true);
 }
 function adminNewSeason(){
   if(!CUR_GROUP) return; var code=CUR_GROUP._code||CUR_GROUP.code;
@@ -3105,6 +3162,82 @@ function changePassword(){
 /* Dashboard mit den ECHTEN Widget-Overrides neu zeichnen (statt der Demo-Daten
    aus dem ersten renderDash-Aufruf vor dem Laden der Overrides). */
 try{ renderDash(); }catch(e){}
+
+/* ===== App-weiter Super-Admin ===== */
+var APP_ADMIN_EMAIL='michael.matteo.meissner@googlemail.com';
+function isAppAdmin(){ return !!(FB_USER && FB_USER.email && FB_USER.email.toLowerCase()===APP_ADMIN_EMAIL); }
+var APP_CONFIG={};
+function applyAppConfig(){
+  if(typeof APP_CONFIG.requireEmailVerification==='boolean') REQUIRE_EMAIL_VERIFICATION=APP_CONFIG.requireEmailVerification;
+  var bar=document.getElementById('announceBar');
+  if(bar){ if(APP_CONFIG.announcement){ bar.textContent='📢 '+APP_CONFIG.announcement; bar.style.display=''; } else { bar.textContent=''; bar.style.display='none'; } }
+  var cg=document.getElementById('cgBal'); if(cg && APP_CONFIG.defaultStartBalance!=null && !cg.dataset.touched) cg.value=APP_CONFIG.defaultStartBalance;
+}
+function loadAppConfig(cb){
+  try{
+    if(typeof fbDb==='undefined' || !fbDb){ if(cb) cb(); return; }
+    fbDb.ref('appConfig').once('value').then(function(s){
+      APP_CONFIG=s.val()||{}; applyAppConfig();
+      /* Falls die E-Mail-Pflicht per Config gelockert wurde und ein Nutzer wartet: Gate neu prüfen */
+      var u=fbAuth.currentUser;
+      if(u && (u.emailVerified || !REQUIRE_EMAIL_VERIFICATION) && typeof agAfterAuth==='function'){
+        var gate=document.getElementById('authGate');
+        if(gate && !gate.classList.contains('hidden')) { /* nur wenn noch gesperrt */ }
+      }
+      if(cb) cb();
+    }).catch(function(){ if(cb) cb(); });
+  }catch(_){ if(cb) cb(); }
+}
+function refreshAppAdminUI(){
+  var card=document.getElementById('appAdminCard'); if(!card) return;
+  if(!isAppAdmin()){ card.style.display='none'; return; }
+  card.style.display='';
+  var g=function(id){return document.getElementById(id);};
+  if(g('acStartBal')) g('acStartBal').value=(APP_CONFIG.defaultStartBalance!=null)?APP_CONFIG.defaultStartBalance:1000;
+  if(g('acVerify')) g('acVerify').checked=(typeof APP_CONFIG.requireEmailVerification==='boolean')?APP_CONFIG.requireEmailVerification:true;
+  if(g('acAnnounce')) g('acAnnounce').value=APP_CONFIG.announcement||'';
+  loadAllGroupsAdmin();
+}
+function appAdminSave(){
+  if(!isAppAdmin()){ toast('Keine Berechtigung'); return; }
+  var sb=parseInt(document.getElementById('acStartBal').value,10); if(isNaN(sb)||sb<0) sb=1000;
+  var cfg={ defaultStartBalance:sb, requireEmailVerification:!!document.getElementById('acVerify').checked, announcement:(document.getElementById('acAnnounce').value||'').trim() };
+  var hint=document.getElementById('acHint'); if(hint) hint.textContent='Speichere …';
+  fbDb.ref('appConfig').set(cfg).then(function(){
+    APP_CONFIG=cfg; applyAppConfig();
+    if(hint) hint.textContent='✓ Gespeichert. Gilt für alle Nutzer.';
+    toast('App-Einstellungen gespeichert');
+  }).catch(function(e){
+    if(hint) hint.textContent='⚠️ Speichern fehlgeschlagen. Firebase-Regel für "appConfig" fehlt evtl. noch (siehe Hinweis von Claude).';
+    toast('Fehler: '+((e&&e.message)||''));
+  });
+}
+function loadAllGroupsAdmin(){
+  var box=document.getElementById('acGroups'); if(!box) return;
+  if(typeof fbDb==='undefined' || !fbDb){ box.innerHTML='<div class="empty" style="padding:8px">Datenbank nicht verbunden.</div>'; return; }
+  box.innerHTML='<div class="empty" style="padding:8px">Lädt …</div>';
+  fbDb.ref('groups').once('value').then(function(s){
+    var gs=s.val()||{}; var codes=Object.keys(gs);
+    if(!codes.length){ box.innerHTML='<div class="empty" style="padding:8px">Keine Gruppen.</div>'; return; }
+    box.innerHTML=codes.map(function(code){
+      var g=gs[code]||{}; var mc=g.members?Object.keys(g.members).length:0;
+      return '<div class="mem-row"><div class="mem-av">'+esc((g.icon||'⚽'))+'</div><div class="mem-n">'+esc(g.name||code)+'<div class="mem-b">'+code+' · '+mc+' Mitglieder · '+lgLabel(g.league)+'</div></div><div class="mem-act"><button class="kick" onclick="appAdminDeleteGroup(\''+code+'\')" title="Gruppe löschen">✕</button></div></div>';
+    }).join('');
+  }).catch(function(){ box.innerHTML='<div class="empty" style="padding:8px">Konnte Gruppen nicht laden.</div>'; });
+}
+function appAdminDeleteGroup(code){
+  if(!isAppAdmin()) return;
+  if(!confirm('Gruppe '+code+' als App-Admin endgültig löschen?')) return;
+  fbDb.ref('groups/'+code).once('value').then(function(s){
+    var g=s.val()||{}; var updates={};
+    Object.keys(g.members||{}).forEach(function(uid){ updates['users/'+uid+'/groups/'+code]=null; });
+    updates['groups/'+code]=null;
+    return fbDb.ref().update(updates);
+  }).then(function(){ toast('Gruppe gelöscht'); loadAllGroupsAdmin(); if(typeof renderGroups==='function') renderGroups(); }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
+}
+/* App-Config beim Start laden (öffentlich lesbar) + nach Login Admin-UI zeigen */
+loadAppConfig();
+try{ fbAuth.onAuthStateChanged(function(u){ setTimeout(function(){ try{ refreshAppAdminUI(); }catch(e){} }, 300); }); }catch(e){}
 </script>
 </body>
 </html>
