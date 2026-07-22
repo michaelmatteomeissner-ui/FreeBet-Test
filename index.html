@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>FreeBet – Prototyp v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,9 +61,10 @@ html[data-theme="dark"] .sc-foot{background:var(--soft)}
 html[data-theme="dark"] #authGate{background:var(--bg)}
 html[data-theme="dark"] .toggle.off{background:#3a4252}
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#d4dae6;color:var(--ink);
-  -webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center}
+  -webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;
+  position:fixed;inset:0;width:100%}
 .app{width:100%;max-width:440px;height:100dvh;max-height:920px;background:var(--bg);position:relative;
   overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(8,22,51,.35)}
 @media(min-width:480px) and (max-width:699px){.app{border-radius:30px;max-width:440px}}
@@ -118,7 +119,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .lg-opt.active .ck{opacity:1}
 
 /* main */
-main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px 96px}
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:16px 14px 24px}
 .screen{display:none;animation:fade .22s ease}.screen.active{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .stack>*+*{margin-top:14px}
@@ -406,14 +407,15 @@ select.admin-inp{width:155px}
 .submit{width:100%;height:50px;background:var(--navy);color:#fff;border:none;border-radius:13px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}.submit:active{transform:scale(.99)}
 
 /* nav – schwebende, abgerundete Leiste */
-.nav{flex-shrink:0;height:64px;background:var(--card);border:1px solid var(--line);border-radius:20px;display:flex;position:relative;z-index:40;margin:0 12px calc(10px + env(safe-area-inset-bottom));box-shadow:0 6px 20px rgba(8,22,51,.14)}
+.nav{flex-shrink:0;height:62px;background:var(--card);border:1px solid var(--line);border-radius:20px;display:flex;position:relative;z-index:40;margin:0 12px calc(6px + env(safe-area-inset-bottom));box-shadow:0 6px 20px rgba(8,22,51,.14)}
 .nav button{flex:1;background:none;border:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-3);cursor:pointer}
 .nav button svg{width:24px;height:24px;flex-shrink:0;display:block}.nav button span{font-size:10.5px;font-weight:600;letter-spacing:-.2px}.nav button.active{color:var(--navy)}
 
 /* toast */
 #announceBar{flex-shrink:0;background:#fff7e6;color:#8a5a00;border-bottom:1px solid #ffe2a8;padding:9px 14px;font-size:12.5px;font-weight:600;line-height:1.4;text-align:center}
 html[data-theme="dark"] #announceBar{background:#2a2210;color:#f0c674;border-bottom-color:#4a3a15}
-.toast{position:absolute;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:60;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:88%;text-align:center}
+.toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:#1c2431;color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:70;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:88%;text-align:center;line-height:1.35}
+html[data-theme="dark"] .toast{background:#2f3a4d;color:#fff;border:1px solid rgba(255,255,255,.16)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 <!-- Firebase (Compat) + Auth -->
@@ -711,7 +713,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 22</div>
+        <div class="hdr-sub2">Tippspiel · Build 23</div>
       </div>
     </div>
   </header>
@@ -888,6 +890,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
         <div id="gdTabelle" style="display:none;margin-top:14px">
           <div class="card"><div class="card-h"><h2>Gruppen-Tabelle</h2><p>nach Guthaben</p></div><div class="rows" id="gdTblRows"></div></div>
         </div>
+        <button class="btn btn-ghost" id="leaveGroupBtn" onclick="leaveGroup()" style="margin-top:18px;color:var(--loss);border-color:#f6c9c4">Gruppe verlassen</button>
       </div>
     </section>
 
@@ -920,17 +923,22 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 
         <!-- APP-ADMIN (nur für den App-Administrator sichtbar) -->
         <div class="card" id="appAdminCard" style="display:none;border:1.5px solid #d8e3f5">
-          <div class="card-h"><h2>🛡️ App-Administration</h2><p>App-weite Einstellungen für alle Nutzer</p></div>
-          <div class="admin-sec" style="border:none;box-shadow:none;margin:0">
-            <div class="admin-row"><span class="admin-lbl">Standard-Startguthaben</span><input class="admin-inp" type="number" id="acStartBal" value="1000"></div>
-            <label class="admin-check"><input type="checkbox" id="acVerify"> E-Mail-Bestätigung Pflicht (neue Konten)</label>
-            <div class="field" style="padding:12px 0 4px"><label>Globale Ansage (leer = aus)</label><input id="acAnnounce" placeholder="z. B. Wartung am Sonntag 10 Uhr"></div>
-            <button class="admin-btn primary" onclick="appAdminSave()">Speichern</button>
-            <div class="admin-hint" id="acHint" style="margin-top:8px"></div>
+          <div class="card-h" id="appAdminHead" onclick="toggleAppAdmin()" style="cursor:pointer">
+            <div><h2>🛡️ App-Administration</h2><p>App-weite Einstellungen für alle Nutzer</p></div>
+            <span id="appAdminChev" style="transition:transform .2s;color:var(--ink-3)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
           </div>
-          <div class="admin-sec" style="border:none;box-shadow:none;margin:0;border-top:1px solid var(--line-2);border-radius:0">
-            <div class="admin-sec-t">Alle Gruppen</div>
-            <div id="acGroups"><div class="empty" style="padding:8px">Lädt …</div></div>
+          <div id="appAdminBody" style="display:none">
+            <div class="admin-sec" style="border:none;box-shadow:none;margin:0">
+              <div class="admin-row"><span class="admin-lbl">Standard-Startguthaben</span><input class="admin-inp" type="number" id="acStartBal" value="1000"></div>
+              <label class="admin-check"><input type="checkbox" id="acVerify"> E-Mail-Bestätigung Pflicht (neue Konten)</label>
+              <div class="field" style="padding:12px 0 4px"><label>Globale Ansage (leer = aus)</label><input id="acAnnounce" placeholder="z. B. Wartung am Sonntag 10 Uhr"></div>
+              <button class="admin-btn primary" onclick="appAdminSave()">Speichern</button>
+              <div class="admin-hint" id="acHint" style="margin-top:8px"></div>
+            </div>
+            <div class="admin-sec" style="border:none;box-shadow:none;margin:0;border-top:1px solid var(--line-2);border-radius:0">
+              <div class="admin-sec-t">Alle Gruppen</div>
+              <div id="acGroups"><div class="empty" style="padding:8px">Lädt …</div></div>
+            </div>
           </div>
         </div>
 
@@ -2753,13 +2761,46 @@ function adminNewSeason(){
 function adminDeleteGroup(){
   if(!CUR_GROUP) return; var code=CUR_GROUP._code||CUR_GROUP.code;
   if(CUR_GROUP.ownerUid!==fbUid()){ toast('Nur der Ersteller kann das'); return; }
-  if(!confirm('Gruppe "'+(CUR_GROUP.name||code)+'" wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.')) return;
+  if(!confirm('Gruppe "'+(CUR_GROUP.name||code)+'" für ALLE Mitglieder endgültig löschen? Das kann nicht rückgängig gemacht werden.')) return;
   var members=CUR_GROUP.members||{}; var updates={};
   Object.keys(members).forEach(function(uid){ updates['users/'+uid+'/groups/'+code]=null; });
   updates['groups/'+code]=null;
   fbDB().ref().update(updates).then(function(){
     MY_GROUPS=MY_GROUPS.filter(function(x){return (x._code||x.code)!==code;});
     toast('Gruppe gelöscht');
+    closeGroup(); renderGroups();
+  }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
+}
+/* Gruppe verlassen: für jeden. Ersteller gibt Admin an ein anderes Mitglied ab
+   (oder löscht die Gruppe, wenn er allein ist). Name, Tabellenplatz und alle
+   Scheine (alte & laufende) des Austretenden werden aus der Gruppe entfernt. */
+function leaveGroup(){
+  if(!CUR_GROUP) return;
+  var code=CUR_GROUP._code||CUR_GROUP.code, uid=fbUid();
+  var members=CUR_GROUP.members||{};
+  var isOwner=(CUR_GROUP.ownerUid===uid);
+  var others=Object.keys(members).filter(function(u){ return u!==uid; });
+  var msg;
+  if(isOwner && others.length) msg='Gruppe verlassen? Die Admin-Rechte gehen automatisch an ein anderes Mitglied über. Dein Name, dein Tabellenplatz und alle deine Scheine werden aus der Gruppe entfernt.';
+  else if(isOwner && !others.length) msg='Du bist das letzte Mitglied – beim Verlassen wird die Gruppe vollständig gelöscht. Fortfahren?';
+  else msg='Gruppe verlassen? Dein Name, dein Tabellenplatz und alle deine Scheine werden aus der Gruppe entfernt. Das kann nicht rückgängig gemacht werden.';
+  if(!confirm(msg)) return;
+  var updates={};
+  if(isOwner && !others.length){
+    updates['groups/'+code]=null;
+    updates['users/'+uid+'/groups/'+code]=null;
+  } else {
+    if(isOwner){
+      var newOwner=others.slice().sort(function(a,b){ return (((members[a]&&members[a].joinedAt)||'')+'').localeCompare(((members[b]&&members[b].joinedAt)||'')+''); })[0];
+      updates['groups/'+code+'/ownerUid']=newOwner;
+    }
+    updates['groups/'+code+'/members/'+uid]=null;
+    updates['groups/'+code+'/slips/'+uid]=null;
+    updates['users/'+uid+'/groups/'+code]=null;
+  }
+  fbDB().ref().update(updates).then(function(){
+    MY_GROUPS=(MY_GROUPS||[]).filter(function(x){ return (x._code||x.code)!==code; });
+    toast((isOwner&&!others.length)?'Gruppe gelöscht':'Gruppe verlassen');
     closeGroup(); renderGroups();
   }).catch(function(e){ toast('Fehler: '+((e&&e.message)||'')); });
 }
@@ -2774,12 +2815,23 @@ function accountDelete(){
     return Promise.all(codes.map(function(code){
       return fbDB().ref('groups/'+code).once('value').then(function(s){
         var g=s.val(); if(!g) return null;
-        if(g.ownerUid===uid){
-          var updates={}; Object.keys(g.members||{}).forEach(function(m){ updates['users/'+m+'/groups/'+code]=null; });
+        var members=g.members||{};
+        var others=Object.keys(members).filter(function(u){ return u!==uid; });
+        var updates={};
+        if(g.ownerUid===uid && !others.length){
+          /* alleiniges Mitglied & Ersteller -> Gruppe löschen */
           updates['groups/'+code]=null;
-          return fbDB().ref().update(updates);
+          updates['users/'+uid+'/groups/'+code]=null;
+        } else {
+          if(g.ownerUid===uid){
+            var newOwner=others.slice().sort(function(a,b){ return (((members[a]&&members[a].joinedAt)||'')+'').localeCompare(((members[b]&&members[b].joinedAt)||'')+''); })[0];
+            updates['groups/'+code+'/ownerUid']=newOwner;
+          }
+          updates['groups/'+code+'/members/'+uid]=null;
+          updates['groups/'+code+'/slips/'+uid]=null;
+          updates['users/'+uid+'/groups/'+code]=null;
         }
-        return fbDB().ref('groups/'+code+'/members/'+uid).remove().then(function(){ return fbDB().ref('users/'+uid+'/groups/'+code).remove(); });
+        return fbDB().ref().update(updates);
       });
     }));
   }).then(function(){
@@ -3196,7 +3248,16 @@ function refreshAppAdminUI(){
   if(g('acStartBal')) g('acStartBal').value=(APP_CONFIG.defaultStartBalance!=null)?APP_CONFIG.defaultStartBalance:1000;
   if(g('acVerify')) g('acVerify').checked=(typeof APP_CONFIG.requireEmailVerification==='boolean')?APP_CONFIG.requireEmailVerification:true;
   if(g('acAnnounce')) g('acAnnounce').value=APP_CONFIG.announcement||'';
-  loadAllGroupsAdmin();
+  /* Gruppen nur laden, wenn das Panel aufgeklappt ist */
+  var body=g('appAdminBody'); if(body && body.style.display!=='none') loadAllGroupsAdmin();
+}
+function toggleAppAdmin(){
+  var body=document.getElementById('appAdminBody'), chev=document.getElementById('appAdminChev');
+  if(!body) return;
+  var open=body.style.display==='none';
+  body.style.display=open?'block':'none';
+  if(chev) chev.style.transform=open?'rotate(180deg)':'';
+  if(open) loadAllGroupsAdmin();
 }
 function appAdminSave(){
   if(!isAppAdmin()){ toast('Keine Berechtigung'); return; }
