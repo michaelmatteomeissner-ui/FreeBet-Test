@@ -390,8 +390,8 @@ select.admin-inp{width:155px}
 .sc-pay{font-size:14px;font-weight:900;flex-shrink:0}
 
 /* bet slip */
-.slip{position:absolute;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));z-index:30;transform:translateY(120%);transition:transform .28s cubic-bezier(.4,1.2,.5,1);pointer-events:none}
-.slip.show{transform:translateY(0);pointer-events:auto}
+.slip{position:absolute;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));z-index:30;transform:translateY(160%);transition:transform .28s cubic-bezier(.4,1.2,.5,1),visibility 0s linear .28s;visibility:hidden;pointer-events:none}
+.slip.show{transform:translateY(0);visibility:visible;pointer-events:auto;transition:transform .28s cubic-bezier(.4,1.2,.5,1),visibility 0s}
 .slip-inner{margin:0 10px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 -4px 24px rgba(8,22,51,.18),var(--shadow);overflow:hidden}
 .slip-bar{background:var(--navy);color:#fff;display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer}
 .slip-bar .cnt{background:#fff;color:var(--navy);font-weight:800;font-size:13px;min-width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 6px}
@@ -737,7 +737,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 30</div>
+        <div class="hdr-sub2">Tippspiel · Build 31</div>
       </div>
     </div>
   </header>
@@ -3422,8 +3422,11 @@ function appAdminDeleteGroup(code){
   });
 }
 /* ===== Update-Hinweis nach Login (nur wenn eine neue Version erschienen ist) ===== */
-var APP_BUILD=30;
+var APP_BUILD=31;
 var APP_UPDATE_NOTES={
+  31: [
+    'Blauer Rest-Streifen über der Menüleiste entfernt, wenn kein Tippschein offen ist'
+  ],
   30: [
     'Neues FreeBet-Logo (Tor & Ball) im Header, Login und auf allen Unterseiten',
     'Neues App-Icon für den Startbildschirm – hell sowie „deep" für den Dunkelmodus'
