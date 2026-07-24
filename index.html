@@ -23,7 +23,7 @@
 html[data-theme="dark"]{
   --navy:#6ea0ff; --navy-d:#4c82e6;
   --hero:#101a30;
-  --bg:#0f1420; --card:#171d29; --line:#2a3242; --line-2:#212936;
+  --bg:#0f1420; --card:#171d29; --line:#39445c; --line-2:#2b3444;
   --ink:#eef1f6; --ink-2:#aab4c4; --ink-3:#6d778a; --tint:#1a2740;
   --field:#10151f; --soft:#1b2230;
   --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 16px rgba(0,0,0,.4);
@@ -63,6 +63,10 @@ html[data-theme="dark"] .bal-cell,
 html[data-theme="dark"] .sc-foot{background:var(--soft)}
 html[data-theme="dark"] #authGate{background:var(--bg)}
 html[data-theme="dark"] .toggle.off{background:#3a4252}
+html[data-theme="dark"] .slip-bar{background:#1c2c4e;color:#fff}
+html[data-theme="dark"] .slip-foot{background:var(--soft)}
+html[data-theme="dark"] .submit{background:var(--navy-d);color:#fff}
+html[data-theme="dark"] .slip-inner{border-color:#2f3b52}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
 body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:#d4dae6;color:var(--ink);
@@ -737,7 +741,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
       </div>
       <div>
         <div class="hdr-title">FreeBet</div>
-        <div class="hdr-sub2">Tippspiel · Build 31</div>
+        <div class="hdr-sub2">Tippspiel · Build 32</div>
       </div>
     </div>
   </header>
@@ -3422,8 +3426,12 @@ function appAdminDeleteGroup(code){
   });
 }
 /* ===== Update-Hinweis nach Login (nur wenn eine neue Version erschienen ist) ===== */
-var APP_BUILD=31;
+var APP_BUILD=32;
 var APP_UPDATE_NOTES={
+  32: [
+    'Dunkelmodus: Abgrenzungen und Rahmen besser erkennbar',
+    'Wettschein im Dunkelmodus stimmig eingefärbt (kein weißer Block mehr)'
+  ],
   31: [
     'Blauer Rest-Streifen über der Menüleiste entfernt, wenn kein Tippschein offen ist'
   ],
